@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkpQ">
+<script src="js/pwa.js" defer></script>
+<title>SkpQ — Product Catalog Import (Admin Only)</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; color: #1B1F23; }
+    h1 { color: #0D9488; }
+    .box { border: 2px dashed #ccc; border-radius: 12px; padding: 24px; text-align: center; margin: 20px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
+    button { background: #0D9488; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    #log { font-family: monospace; font-size: 13px; white-space: pre-wrap; background: #f4f6f8; padding: 12px; border-radius: 8px; margin-top: 16px; max-height: 200px; overflow-y: auto; }
+    .warn { background: #fff4e5; border: 1px solid #ffb020; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+</style>
+</head>
+<body>
+<h1>Product Catalog Import</h1>
+<div class="warn">
+    ⚠️ Admin-only tool — this is not part of the customer/employee app flow. Don't link to this
+    page from the main app, and consider deleting it (or restricting it) before you submit/deploy
+    for real. Anyone who opens this page and is signed in can currently write to the product catalog.
+</div>
+
+<p>Upload a CSV with columns: <code>barcode,name,category,price,weight_grams</code>. See <code>products-template.csv</code> for an example — open it in Excel/Sheets, edit it with your own products, save as CSV, and upload here. <strong>Weight is required</strong> for the employee's scale-verification step, so don't leave that column blank.</p>
+
+<div class="box">
+    <input type="file" id="csv-input" accept=".csv"/>
+</div>
+
+<table id="preview-table" style="display:none">
+    <thead><tr><th>Barcode</th><th>Name</th><th>Category</th><th>Price (₹)</th><th>Weight (g)</th></tr></thead>
+    <tbody id="preview-body"></tbody>
+</table>
+
+<button id="upload-btn" disabled>Upload to Firestore</button>
+<div id="log"></div>
+
+<script>
+    let parsedRows = [];
+
+    function parseCSV(text) {
+        const lines = text.trim().split(/\r?\n/);
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        return lines.slice(1).filter(l => l.trim()).map(line => {
+            const cells = line.split(',').map(c => c.trim());
+            const row = {};
+            headers.forEach((h, i) => row[h] = cells[i]);
+            return row;
+        });
+    }
+
+    document.getElementById('csv-input').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            parsedRows = parseCSV(ev.target.result);
+            const tbody = document.getElementById('preview-body');
+            tbody.innerHTML = parsedRows.map(r => `
+                <tr><td>${r.barcode || ''}</td><td>${r.name || ''}</td><td>${r.category || ''}</td><td>${r.price || ''}</td><td>${r.weight_grams || '<span style="color:#c0392b">missing</span>'}</td></tr>
+            `).join('');
+            document.getElementById('preview-table').style.display = parsedRows.length ? 'table' : 'none';
+            document.getElementById('upload-btn').disabled = parsedRows.length === 0;
+            log(`Parsed ${parsedRows.length} rows from ${file.name}.`);
+        };
+        reader.readAsText(file);
+    });
+
+    function log(msg) {
+        const el = document.getElementById('log');
+        el.textContent += msg + '\n';
+        el.scrollTop = el.scrollHeight;
+    }
+
+    document.getElementById('upload-btn').addEventListener('click', async () => {
+        const user = auth.currentUser;
+        if (!user) {
+            log('⚠️ You need to be signed in first. Sign in via login.html or employee-login.html in another tab, then reload this page.');
+            return;
+        }
+        document.getElementById('upload-btn').disabled = true;
+        log(`Uploading ${parsedRows.length} products...`);
+
+        let batch = db.batch();
+        let count = 0;
+        let batchCount = 0;
+
+        for (const row of parsedRows) {
+            if (!row.barcode) continue;
+            const ref = db.collection('products').doc(row.barcode);
+            batch.set(ref, {
+                name: row.name || '',
+                category: row.category || '',
+                price: parseFloat(row.price) || 0,
+                weightGrams: parseFloat(row.weight_grams) || 0
+            });
+            count++;
+            batchCount++;
+            // Firestore batches max out at 500 writes
+            if (batchCount === 400) {
+                await batch.commit();
+                batch = db.batch();
+                batchCount = 0;
+                log(`  ...committed ${count} so far`);
+            }
+        }
+        if (batchCount > 0) await batch.commit();
+
+        log(`✅ Done. Uploaded ${count} products to the "products" collection.`);
+        document.getElementById('upload-btn').disabled = false;
+    });
+
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            log('Not signed in yet — open login.html or employee-login.html in another tab, sign in, then come back and reload this page.');
+        } else {
+            log(`Signed in as ${user.email || user.displayName}. Ready to upload.`);
+        }
+    });
+</script>
+</body></html>

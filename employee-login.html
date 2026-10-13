@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkpQ">
+<script src="js/pwa.js" defer></script>
+<link rel="stylesheet" href="css/tailwind.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<title>SkpQ Staff Portal - Login</title>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .employee-input:focus-within {
+            border-color: #0D9488;
+            box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
+        }
+    </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/cart.js"></script>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+<!-- Background Decorative Element (Subtle & Professional) -->
+<div class="absolute inset-0 z-0 opacity-10 pointer-events-none">
+<div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-primary blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full bg-secondary blur-[100px]"></div>
+</div>
+<!-- Main Container -->
+<main class="z-10 w-full max-w-md px-container-padding flex flex-col gap-xl">
+<!-- Header / Branding Section -->
+<header class="text-center flex flex-col items-center gap-sm">
+<div class="w-16 h-16 bg-primary rounded-xl flex items-center justify-center mb-md shadow-lg">
+<span class="material-symbols-outlined text-white text-[32px]">shield_person</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary tracking-tight">
+                SkpQ Staff
+            </h1>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                Inventory &amp; Logistics Management Portal
+            </p>
+</header>
+<!-- Login Form Card -->
+<section class="bg-surface-container-lowest border border-outline-variant p-lg rounded-[24px] shadow-[0px_4px_20px_rgba(0,0,0,0.05)]">
+<form action="#" class="flex flex-col gap-md" method="POST" onsubmit="event.preventDefault();">
+<!-- Email Field -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface-variant px-1" for="company-email">Company Email</label>
+<div class="employee-input flex items-center gap-md border border-outline rounded-[16px] px-md py-3 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">mail</span>
+<input class="bg-transparent border-none outline-none w-full font-body-md text-on-surface placeholder:text-outline" id="company-email" name="email" placeholder="name@skpq.com" required="" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface-variant px-1" for="password">Password</label>
+<div class="employee-input flex items-center gap-md border border-outline rounded-[16px] px-md py-3 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">lock</span>
+<input class="bg-transparent border-none outline-none w-full font-body-md text-on-surface placeholder:text-outline" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+<button class="text-on-surface-variant hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+<!-- Remember Me & Forgot Password -->
+<div class="flex justify-between items-center px-1 mb-sm">
+<label class="flex items-center gap-sm cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox"/>
+<span class="font-label-sm text-label-sm text-on-surface-variant group-hover:text-on-surface">Remember session</span>
+</label>
+<a class="font-label-sm text-label-sm text-primary hover:underline font-semibold" href="#" id="forgot-password-link">Forgot password?</a>
+</div>
+<!-- Submit Button -->
+<button class="bg-[#0D9488] hover:bg-[#0b7a6f] active:scale-95 text-white font-label-md text-label-md py-4 rounded-[16px] transition-all flex items-center justify-center gap-sm shadow-md mt-sm" type="submit">
+<span>Login</span>
+<span class="material-symbols-outlined text-[20px]">login</span>
+</button>
+</form>
+</section>
+<!-- Footer / Utilitarian Metadata -->
+<footer class="flex flex-col items-center gap-md">
+<div class="flex items-center gap-md">
+<span class="h-[1px] w-12 bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-outline">v2.4.1 Build-Release</span>
+<span class="h-[1px] w-12 bg-outline-variant"></span>
+</div>
+<div class="grid grid-cols-2 gap-sm w-full">
+<button class="border-2 border-outline hover:bg-surface-variant font-label-sm text-label-sm text-on-surface px-md py-3 rounded-lg flex items-center justify-center gap-sm transition-colors" onclick="window.location.href='support.html'">
+<span class="material-symbols-outlined text-[18px]">support_agent</span>
+                    IT Support
+                </button>
+<button class="border-2 border-outline hover:bg-surface-variant font-label-sm text-label-sm text-on-surface px-md py-3 rounded-lg flex items-center justify-center gap-sm transition-colors" onclick="window.location.href='support.html'">
+<span class="material-symbols-outlined text-[18px]">qr_code_scanner</span>
+                    Scan ID
+                </button>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant opacity-60 text-center mt-md">
+                Authorized Personnel Only. All activities are logged under internal security protocols.
+            </p>
+</footer>
+</main>
+<!-- Side Graphic for Desktop (Asymmetric Layout) -->
+<div class="hidden lg:block fixed right-0 top-0 h-full w-1/3 bg-surface-container overflow-hidden border-l border-outline-variant">
+<div class="h-full w-full relative flex items-center justify-center p-xl">
+<div class="absolute inset-0 z-0 overflow-hidden">
+<div class="absolute top-1/4 left-1/4 w-[600px] h-[600px] border border-primary/10 rounded-full animate-pulse"></div>
+<div class="absolute top-1/3 left-1/3 w-[400px] h-[400px] border border-primary/5 rounded-full animate-pulse [animation-delay:1s]"></div>
+</div>
+<div class="relative z-10 flex flex-col gap-lg">
+<div class="bg-surface-container-lowest p-lg rounded-xl shadow-xl border border-outline-variant transform rotate-2 max-w-sm">
+<div class="flex items-center gap-md mb-md">
+<span class="material-symbols-outlined text-primary" data-weight="fill">analytics</span>
+<h3 class="font-title-md text-title-md text-on-surface">Real-time Metrics</h3>
+</div>
+<div class="space-y-sm">
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%]"></div>
+</div>
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[45%]"></div>
+</div>
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[90%]"></div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl shadow-xl border border-outline-variant transform -rotate-2 ml-md max-w-sm">
+<div class="flex items-center gap-md mb-md">
+<span class="material-symbols-outlined text-secondary" data-weight="fill">inventory_2</span>
+<h3 class="font-title-md text-title-md text-on-surface">Stock Control</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Securely manage 250,000+ SKUs with SkpQ's advanced proprietary ledger system.
+                    </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Interaction Script -->
+<script>
+        // Simple password visibility toggle
+        const toggleBtn = document.querySelector('button[type="button"]');
+        const passwordInput = document.getElementById('password');
+        const visibilityIcon = toggleBtn.querySelector('span');
+
+        toggleBtn.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            visibilityIcon.textContent = isPassword ? 'visibility_off' : 'visibility';
+        });
+
+        // Simple haptic-like feedback on submit
+        const form = document.querySelector('form');
+
+        document.getElementById('forgot-password-link').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('company-email').value.trim();
+            if (!email) {
+                alert('Enter your company email above first, then tap "Forgot password?" again.');
+                return;
+            }
+            try {
+                await auth.sendPasswordResetEmail(email);
+                alert(`Password reset email sent to ${email}. Check your inbox.`);
+            } catch (err) {
+                console.error(err);
+                alert('Could not send reset email: ' + err.message);
+            }
+        });
+
+        form.addEventListener('submit', async () => {
+            const btn = form.querySelector('button[type="submit"]');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<span>Signing in...</span><span class="material-symbols-outlined animate-spin">sync</span>`;
+            btn.classList.add('opacity-80');
+            btn.disabled = true;
+
+            const email = document.getElementById('company-email').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                // Mark this browser session as an employee session
+                localStorage.setItem('skpq_role', 'employee');
+                window.location.href = 'employee-home.html';
+            } catch (err) {
+                console.error(err);
+                alert('Login failed: ' + err.message);
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('opacity-80');
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body></html>

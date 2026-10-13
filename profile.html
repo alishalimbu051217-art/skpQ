@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkpQ">
+<script src="js/pwa.js" defer></script>
+<link rel="stylesheet" href="css/tailwind.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .profile-card-gradient {
+            background: linear-gradient(135deg, #00685f 0%, #1b6b51 100%);
+        }
+        /* Custom scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #bcc9c6;
+            border-radius: 10px;
+        }
+    </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/cart.js"></script>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md flex flex-col transition-colors duration-300">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-gutter w-full h-16 sticky top-0 z-50 bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline">
+<div class="flex items-center gap-4">
+<button class="hover:bg-primary-container dark:hover:bg-primary-fixed-variant transition-colors p-2 rounded-full active:opacity-80 scale-95 duration-100">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim">arrow_back</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary dark:text-primary-fixed font-black">SkpQ</h1>
+</div>
+</header>
+<main class="flex-grow container mx-auto px-container-padding max-w-lg py-xl">
+<!-- Profile Header Section -->
+<section class="flex flex-col items-center text-center mb-xl">
+<div class="relative group cursor-pointer" id="avatar-click-target">
+<div class="w-28 h-28 rounded-full border-4 border-primary p-1 mb-4 shadow-lg overflow-hidden bg-primary-container flex items-center justify-center">
+<img class="w-full h-full rounded-full object-cover hidden" id="avatar-img" alt="Your profile picture"/>
+<span class="material-symbols-outlined text-on-primary-container" style="font-size: 56px;" id="avatar-fallback">person</span>
+</div>
+<div class="absolute bottom-6 right-2 bg-primary text-on-primary p-1.5 rounded-full shadow-md scale-90">
+<span class="material-symbols-outlined !text-[18px]">edit</span>
+</div>
+<input type="file" accept="image/*" class="hidden" id="avatar-file-input"/>
+</div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-1" id="profile-name">Loading...</h2>
+<p class="font-body-md text-on-surface-variant" id="profile-email"></p>
+</section>
+<!-- Profile Settings Bento Grid -->
+<div class="grid grid-cols-1 gap-md mb-xl">
+<!-- Appearance Toggle -->
+<div class="bg-surface-container-low dark:bg-inverse-surface p-md rounded-xl shadow-[0px_4px_20px_rgba(0,0,0,0.05)] flex items-center justify-between border border-outline-variant/30">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">dark_mode</span>
+</div>
+<div>
+<p class="font-label-md text-on-surface">Dark Mode</p>
+<p class="text-xs text-on-surface-variant">Switch theme</p>
+</div>
+</div>
+<button class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-outline-variant" id="theme-toggle" onclick="toggleDarkMode()">
+<span class="sr-only">Toggle Dark Mode</span>
+<span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0" id="toggle-thumb"></span>
+</button>
+</div>
+<!-- Order History -->
+<div class="bg-surface-container-low dark:bg-inverse-surface p-md rounded-xl shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30">
+<div class="flex items-center justify-between mb-md">
+<h3 class="font-title-md text-title-md-mobile text-on-surface">Order History</h3>
+</div>
+<div class="space-y-sm" id="order-history-list">
+<p class="text-center text-on-surface-variant text-sm py-4">Loading...</p>
+</div>
+</div>
+<!-- Additional Options -->
+<div class="bg-surface-container-low dark:bg-inverse-surface p-md rounded-xl shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30">
+<div class="space-y-md">
+<div class="flex items-center gap-md cursor-pointer hover:bg-surface-variant/50 p-2 rounded-lg transition-all" onclick="window.location.href='edit-profile.html'">
+<div class="w-10 h-10 flex items-center justify-center rounded-lg bg-secondary-container/50 text-secondary">
+<span class="material-symbols-outlined">edit</span>
+</div>
+<p class="font-label-md text-on-surface flex-grow">Edit Profile</p>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Logout Action -->
+<button class="w-full py-4 px-md rounded-xl text-error font-title-md flex items-center justify-center gap-2 border-2 border-error/10 hover:bg-error/5 active:scale-95 transition-all mb-xl" id="logout-btn">
+<span class="material-symbols-outlined">logout</span>
+            Logout
+        </button>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe shadow-[0px_-4px_20px_rgba(0,0,0,0.05)] bg-surface-container dark:bg-inverse-surface rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-4 py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors" onclick="window.location.href='dashboard.html'">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-4 py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors" onclick="window.location.href='scan.html'">
+<span class="material-symbols-outlined">barcode_scanner</span>
+<span class="font-label-sm text-label-sm">Scan</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-xl px-4 py-1 Active: scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+<script>
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const thumb = document.getElementById('toggle-thumb');
+            const toggle = document.getElementById('theme-toggle');
+            
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                thumb.classList.replace('translate-x-5', 'translate-x-0');
+                toggle.classList.replace('bg-primary', 'bg-outline-variant');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                thumb.classList.replace('translate-x-0', 'translate-x-5');
+                toggle.classList.replace('bg-outline-variant', 'bg-primary');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Sync the toggle's visual state with the current theme on load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.getElementById('toggle-thumb').classList.replace('translate-x-0', 'translate-x-5');
+                document.getElementById('theme-toggle').classList.replace('bg-outline-variant', 'bg-primary');
+            }
+        });
+
+        // Add subtle interaction effects for list items
+        document.querySelectorAll('.group').forEach(item => {
+            item.addEventListener('mousedown', () => {
+                item.style.transform = 'scale(0.98)';
+            });
+            item.addEventListener('mouseup', () => {
+                item.style.transform = 'scale(1)';
+            });
+            item.addEventListener('mouseleave', () => {
+                item.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+<script>
+    let currentUid = null;
+
+    auth.onAuthStateChanged(user => {
+        if (!user) { window.location.href = 'login.html'; return; }
+        currentUid = user.uid;
+        document.getElementById('profile-name').textContent = user.displayName || 'SkpQ Customer';
+        document.getElementById('profile-email').textContent = user.email || '';
+        loadProfileDoc(user);
+        loadOrderHistory(user.uid);
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        await auth.signOut();
+        Cart.clear();
+        window.location.href = 'index.html';
+    });
+
+    // ---------------------------------------------------------
+    // Avatar (stored as a small base64 image on the user's Firestore doc)
+    // ---------------------------------------------------------
+    function setAvatarDisplay(photoURL) {
+        const img = document.getElementById('avatar-img');
+        const fallback = document.getElementById('avatar-fallback');
+        if (photoURL) {
+            img.src = photoURL;
+            img.classList.remove('hidden');
+            fallback.classList.add('hidden');
+        } else {
+            img.classList.add('hidden');
+            fallback.classList.remove('hidden');
+        }
+    }
+
+    async function loadProfileDoc(user) {
+        try {
+            const doc = await db.collection('users').doc(user.uid).get();
+            const data = doc.exists ? doc.data() : {};
+            setAvatarDisplay(data.photoURL || null);
+        } catch (err) {
+            console.error('Could not load profile doc:', err);
+            setAvatarDisplay(null);
+        }
+    }
+
+    document.getElementById('avatar-click-target').addEventListener('click', () => {
+        document.getElementById('avatar-file-input').click();
+    });
+
+    document.getElementById('avatar-file-input').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file || !currentUid) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const image = new Image();
+            image.onload = async () => {
+                // Downscale to keep the doc small (Firestore doc limit is 1MB)
+                const size = 200;
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                const scale = Math.max(size / image.width, size / image.height);
+                const w = image.width * scale, h = image.height * scale;
+                ctx.drawImage(image, (size - w) / 2, (size - h) / 2, w, h);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+                setAvatarDisplay(dataUrl);
+                try {
+                    await db.collection('users').doc(currentUid).set({ photoURL: dataUrl }, { merge: true });
+                } catch (err) {
+                    console.error(err);
+                    alert('Could not save your profile picture: ' + err.message);
+                }
+            };
+            image.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // ---------------------------------------------------------
+    // Order history — real completed sessions from Firestore
+    // ---------------------------------------------------------
+    async function loadOrderHistory(uid) {
+        const listEl = document.getElementById('order-history-list');
+        try {
+            const snap = await db.collection('sessions')
+                .where('customerUid', '==', uid)
+                .where('status', '==', 'paid')
+                .orderBy('createdAt', 'desc')
+                .limit(10)
+                .get();
+
+            if (snap.empty) {
+                listEl.innerHTML = '<p class="text-center text-on-surface-variant text-sm py-4">No past orders yet.</p>';
+                return;
+            }
+
+            listEl.innerHTML = snap.docs.map(doc => {
+                const d = doc.data();
+                const date = d.createdAt ? d.createdAt.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '--';
+                const itemCount = (d.items || []).reduce((s, i) => s + i.qty, 0);
+                return `
+                    <div class="flex items-center justify-between p-sm rounded-lg hover:bg-surface-variant/50 transition-colors">
+                        <div class="flex items-center gap-md">
+                            <span class="material-symbols-outlined text-on-surface-variant">receipt_long</span>
+                            <div>
+                                <p class="font-label-md text-on-surface">${date}</p>
+                                <p class="text-xs text-on-surface-variant">${itemCount} item${itemCount === 1 ? '' : 's'}</p>
+                            </div>
+                        </div>
+                        <span class="font-title-md text-primary">₹${(d.total || 0).toFixed(2)}</span>
+                    </div>
+                `;
+            }).join('<div class="h-px bg-outline-variant/20 mx-2"></div>');
+        } catch (err) {
+            console.error('Could not load order history:', err);
+            listEl.innerHTML = '<p class="text-center text-on-surface-variant text-sm py-4">Could not load order history.</p>';
+        }
+    }
+</script>
+</body></html>

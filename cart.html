@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkpQ">
+<script src="js/pwa.js" defer></script>
+<link rel="stylesheet" href="css/tailwind.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        @keyframes subtle-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .float-anim { animation: subtle-float 3s ease-in-out infinite; }
+    </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/cart.js"></script>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-body-md">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-gutter w-full h-16 sticky top-0 z-50 bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary dark:text-primary-fixed-dim hover:bg-primary-container dark:hover:bg-primary-fixed-variant transition-colors p-2 rounded-full scale-95 duration-100 active:opacity-80" onclick="window.location.href='dashboard.html'">
+                arrow_back
+            </button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary dark:text-primary-fixed font-black tracking-tight">SkpQ</h1>
+</div>
+</header>
+<main class="flex-grow px-container-padding py-lg max-w-2xl mx-auto w-full">
+<!-- Scanned Header -->
+<div class="mb-lg flex justify-between items-end">
+<div>
+<p class="font-label-md text-label-md text-primary uppercase tracking-widest mb-1">Your Basket</p>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Scanned Items</h2>
+</div>
+<div class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-md flex items-center gap-1" id="cart-badge">
+<span class="material-symbols-outlined text-[18px]">shopping_basket</span>
+                <span id="cart-badge-count">0 Items</span>
+            </div>
+</div>
+<!-- Items List - Bento Style Container -->
+<div class="space-y-md" id="cart-items-list">
+<p class="text-center text-on-surface-variant py-8" id="cart-empty-msg">Your basket is empty. Go scan something!</p>
+</div>
+<!-- Summary Section -->
+<div class="mt-xl p-lg bg-surface-container-high rounded-2xl border border-outline-variant">
+<div class="space-y-3 mb-lg">
+<div class="flex justify-between font-body-md text-on-surface-variant">
+<span>Subtotal</span>
+<span id="cart-subtotal-line">₹0.00</span>
+</div>
+<div class="flex justify-between font-body-md text-on-surface-variant">
+<span>Tax (Estimated)</span>
+<span>₹0.00</span>
+</div>
+<div class="flex justify-between font-body-md text-on-surface-variant items-center">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">scale</span> Total Weight</span>
+<span class="font-bold text-on-surface" id="cart-total-weight-line">0 g</span>
+</div>
+<div class="pt-3 border-t border-outline-variant flex justify-between items-center">
+<span class="font-headline-lg-mobile text-on-surface">Total</span>
+<span class="font-display-lg text-display-lg text-primary" id="cart-total-line">₹0.00</span>
+</div>
+</div>
+<!-- Checkout Action -->
+<button class="w-full bg-[#0D9488] hover:bg-[#0F766E] text-white py-5 rounded-2xl font-title-md flex items-center justify-center gap-3 shadow-lg active:scale-[0.98] transition-all group overflow-hidden relative" id="generateToken">
+<span class="material-symbols-outlined group-hover:rotate-12 transition-transform">qr_code_2</span>
+<span class="relative z-10">Generate Token/QR Code</span>
+<div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+</button>
+<p class="text-center font-label-sm text-on-surface-variant mt-md">
+                Present this code at the exit kiosk to complete your purchase.
+            </p>
+</div>
+</main>
+<!-- Success Overlay (Hidden by default) -->
+<div class="fixed inset-0 z-[100] bg-on-surface/40 backdrop-blur-md hidden flex items-center justify-center p-gutter" id="tokenOverlay">
+<div class="bg-surface rounded-3xl p-xl w-full max-w-sm text-center shadow-2xl scale-90 opacity-0 transition-all duration-300" id="overlayContent">
+<div class="w-20 h-20 bg-primary-container rounded-full flex items-center justify-center mx-auto mb-lg float-anim">
+<span class="material-symbols-outlined text-white text-[40px]">check_circle</span>
+</div>
+<h3 class="font-headline-lg text-on-surface mb-2">Checkout Token</h3>
+<p class="font-body-md text-on-surface-variant mb-xl">Scan this at the checkout terminal</p>
+<!-- QR Placeholder -->
+<div class="bg-white p-4 rounded-xl border-4 border-primary/20 aspect-square w-full mb-xl flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary to-transparent"></div>
+<span class="material-symbols-outlined text-on-surface text-[120px] opacity-80">qr_code_2</span>
+</div>
+<button class="w-full py-4 rounded-xl font-label-md border-2 border-outline-variant text-on-surface hover:bg-surface-variant transition-colors" onclick="closeOverlay()">
+                Back to Cart
+            </button>
+</div>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe md:hidden bg-surface-container dark:bg-inverse-surface shadow-[0px_-4px_20px_rgba(0,0,0,0.05)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-4 py-1 hover:text-primary transition-colors" href="dashboard.html">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-xl px-4 py-1 active:scale-90 transition-transform duration-200" href="scan.html">
+<span class="material-symbols-outlined">barcode_scanner</span>
+<span class="font-label-sm text-label-sm">Scan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-4 py-1 hover:text-primary transition-colors" href="profile.html">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        const generateBtn = document.getElementById('generateToken');
+
+        function formatWeight(grams) {
+            if (!grams) return 'weight not set';
+            return grams >= 1000 ? `${(grams / 1000).toFixed(2)} kg` : `${grams} g`;
+        }
+
+        function renderCartPage() {
+            const items = Cart.get();
+            const listEl = document.getElementById('cart-items-list');
+            const emptyMsg = document.getElementById('cart-empty-msg');
+            const totalQty = items.reduce((s, i) => s + i.qty, 0);
+            const totalWeightGrams = items.reduce((s, i) => s + (i.weightGrams || 0) * i.qty, 0);
+
+            document.getElementById('cart-badge-count').textContent = `${totalQty} Item${totalQty === 1 ? '' : 's'}`;
+            document.getElementById('cart-subtotal-line').textContent = `₹${Cart.total().toFixed(2)}`;
+            document.getElementById('cart-total-line').textContent = `₹${Cart.total().toFixed(2)}`;
+            document.getElementById('cart-total-weight-line').textContent = formatWeight(totalWeightGrams);
+
+            if (items.length === 0) {
+                generateBtn.disabled = true;
+                generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+            generateBtn.disabled = false;
+            generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            listEl.innerHTML = items.map(i => `
+                <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30 flex items-center gap-md group hover:border-primary transition-colors duration-300">
+                    <div class="flex-grow">
+                        <h3 class="font-title-md text-title-md text-on-surface">${i.name}</h3>
+                        <p class="font-label-sm text-label-sm text-on-surface-variant">Qty: ${i.qty} • ${formatWeight(i.weightGrams)} each • ${formatWeight((i.weightGrams || 0) * i.qty)} total</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-title-md text-title-md text-primary">₹${(i.price * i.qty).toFixed(2)}</span>
+                        <button class="block text-error font-label-sm mt-1" onclick="removeItem('${i.code}')">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function removeItem(code) {
+            Cart.removeItem(code);
+            renderCartPage();
+        }
+
+        function generateToken() {
+            return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit token
+        }
+
+        generateBtn.addEventListener('click', async () => {
+            const items = Cart.get();
+            if (items.length === 0) return;
+
+            const user = auth.currentUser;
+            if (!user) { window.location.href = 'login.html'; return; }
+
+            generateBtn.disabled = true;
+            generateBtn.querySelector('span.relative').textContent = 'Creating session...';
+
+            const token = generateToken();
+            try {
+                await db.collection('sessions').doc(token).set({
+                    customerUid: user.uid,
+                    customerName: user.displayName || null,
+                    items: items,
+                    total: Cart.total(),
+                    totalWeightGrams: items.reduce((s, i) => s + (i.weightGrams || 0) * i.qty, 0),
+                    status: 'pending', // pending -> verified
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                window.location.href = `token.html?token=${token}`;
+            } catch (err) {
+                console.error(err);
+                alert('Could not create checkout session: ' + err.message);
+                generateBtn.disabled = false;
+                generateBtn.querySelector('span.relative').textContent = 'Generate Token/QR Code';
+            }
+        });
+
+        auth.onAuthStateChanged(user => {
+            if (!user) window.location.href = 'login.html';
+        });
+
+        renderCartPage();
+
+        // Close on background click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeOverlay();
+        });
+    </script>
+</body></html>

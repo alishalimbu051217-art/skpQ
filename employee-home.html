@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkpQ">
+<script src="js/pwa.js" defer></script>
+<link rel="stylesheet" href="css/tailwind.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<title>SkpQ Staff Portal - Home</title>
+<style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; display: inline-block; line-height: 1; }
+    body { font-family: 'Inter', sans-serif; }
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+</head>
+<body class="bg-[#F4F6F8] text-[#1B1F23] min-h-screen flex flex-col">
+<header class="flex items-center justify-between px-6 h-16 border-b border-black/10 bg-white">
+<h1 class="font-bold text-lg text-[#0D9488]">SkpQ Staff Portal</h1>
+<button class="p-2 rounded-full hover:bg-black/5" id="logout-btn" title="Sign out">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</header>
+<main class="flex-1 max-w-lg mx-auto w-full px-6 py-10 flex flex-col gap-8">
+<section class="text-center">
+<div class="w-16 h-16 mx-auto rounded-full bg-[#0D9488]/10 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-[#0D9488] text-3xl">badge</span>
+</div>
+<p class="text-black/50 text-sm">Signed in as</p>
+<h2 class="text-xl font-bold" id="employee-email">--</h2>
+</section>
+
+<button class="w-full bg-[#0D9488] hover:bg-[#0b7a6f] text-white font-bold py-5 rounded-2xl shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all" onclick="window.location.href='employee-dashboard.html'">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+Start Scanning / Verify Order
+</button>
+
+<section class="bg-white rounded-2xl border border-black/10 p-5">
+<h3 class="font-semibold mb-3">Quick links</h3>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex flex-col items-center gap-2 p-4 rounded-xl border border-black/10 hover:bg-black/5 transition-colors" onclick="window.location.href='support.html'">
+<span class="material-symbols-outlined text-[#0D9488]">support_agent</span>
+<span class="text-sm font-medium">Support</span>
+</button>
+<button class="flex flex-col items-center gap-2 p-4 rounded-xl border border-black/10 hover:bg-black/5 transition-colors" id="logout-btn-2">
+<span class="material-symbols-outlined text-[#0D9488]">logout</span>
+<span class="text-sm font-medium">Log out</span>
+</button>
+</div>
+</section>
+</main>
+<script>
+    auth.onAuthStateChanged(user => {
+        if (!user || localStorage.getItem('skpq_role') !== 'employee') {
+            window.location.href = 'employee-login.html';
+            return;
+        }
+        document.getElementById('employee-email').textContent = user.email || 'Staff member';
+    });
+
+    async function doLogout() {
+        await auth.signOut();
+        localStorage.removeItem('skpq_role');
+        window.location.href = 'employee-login.html';
+    }
+    document.getElementById('logout-btn').addEventListener('click', doLogout);
+    document.getElementById('logout-btn-2').addEventListener('click', doLogout);
+</script>
+</body></html>

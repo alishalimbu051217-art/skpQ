@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkpQ">
+<script src="js/pwa.js" defer></script>
+<title>Payment Options - SkpQ</title>
+<link rel="stylesheet" href="css/tailwind.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9f9ff;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .payment-card-active {
+            border-color: #00685f;
+            background-color: #f4fffc;
+        }
+        .security-badge-glow {
+            box-shadow: 0 0 20px rgba(0, 104, 95, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/cart.js"></script>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-gutter w-full h-16 sticky top-0 z-50 bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<button aria-label="Go back" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-primary-container transition-colors duration-100 active:opacity-80 scale-95" onclick="window.location.href='dashboard.html'">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary font-black">SkpQ</h1>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex flex-col items-end">
+<span class="font-label-md text-label-md text-on-surface">Secure Checkout</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">lock</span> Encrypted
+                </span>
+</div>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center py-8 px-container-padding max-w-[1440px] mx-auto w-full">
+<!-- Order Summary Card -->
+<section class="w-full max-w-2xl mb-8">
+<div class="bg-surface-container-lowest rounded-[24px] p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant">
+<div class="flex justify-between items-center mb-4">
+<h2 class="font-title-md text-title-md text-on-surface">Order Summary</h2>
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm" id="order-item-count">0 Items</span>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between font-body-md text-body-md text-on-surface-variant">
+<span>Subtotal</span>
+<span id="order-subtotal">₹0.00</span>
+</div>
+<div class="flex justify-between font-body-md text-body-md text-on-surface-variant">
+<span>Tax (GST 4%)</span>
+<span id="order-tax">₹0.00</span>
+</div>
+<div class="h-px bg-outline-variant my-2"></div>
+<div class="flex justify-between items-baseline">
+<span class="font-title-md text-title-md text-on-surface">Total Amount</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-primary" id="order-total">₹0.00</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Payment Methods Section -->
+<section class="w-full max-w-2xl">
+<h2 class="font-title-md text-title-md text-on-surface mb-4 px-2">Select Payment Method</h2>
+<div class="grid grid-cols-1 gap-4">
+<!-- UPI Option -->
+<label class="group relative flex items-center p-5 bg-surface-container-lowest rounded-[20px] border-2 border-transparent hover:border-primary/30 transition-all cursor-pointer shadow-[0px_4px_12px_rgba(0,0,0,0.03)] active:scale-[0.98]">
+<input checked="" class="peer hidden" name="payment" type="radio" value="upi"/>
+<div class="peer-checked:border-primary absolute inset-0 border-2 border-transparent rounded-[20px] transition-colors pointer-events-none"></div>
+<div class="w-12 h-12 bg-secondary-container rounded-xl flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-on-secondary-container text-[28px]">payments</span>
+</div>
+<div class="flex-grow">
+<p class="font-label-md text-label-md text-on-surface">UPI</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Google Pay, PhonePe, Paytm</p>
+</div>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center peer-checked:border-primary peer-checked:bg-primary transition-all">
+<div class="w-2.5 h-2.5 rounded-full bg-white opacity-0 peer-checked:opacity-100"></div>
+</div>
+</label>
+<!-- Card Option -->
+<label class="group relative flex items-center p-5 bg-surface-container-lowest rounded-[20px] border-2 border-transparent hover:border-primary/30 transition-all cursor-pointer shadow-[0px_4px_12px_rgba(0,0,0,0.03)] active:scale-[0.98]">
+<input class="peer hidden" name="payment" type="radio"/>
+<div class="peer-checked:border-primary absolute inset-0 border-2 border-transparent rounded-[20px] transition-colors pointer-events-none"></div>
+<div class="w-12 h-12 bg-secondary-container rounded-xl flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-on-secondary-container text-[28px]">credit_card</span>
+</div>
+<div class="flex-grow">
+<p class="font-label-md text-label-md text-on-surface">Credit / Debit Card</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Visa, Mastercard, RuPay</p>
+</div>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center peer-checked:border-primary peer-checked:bg-primary transition-all">
+<div class="w-2.5 h-2.5 rounded-full bg-white opacity-0 peer-checked:opacity-100"></div>
+</div>
+</label>
+<!-- Wallet Option -->
+<label class="group relative flex items-center p-5 bg-surface-container-lowest rounded-[20px] border-2 border-transparent hover:border-primary/30 transition-all cursor-pointer shadow-[0px_4px_12px_rgba(0,0,0,0.03)] active:scale-[0.98]">
+<input class="peer hidden" name="payment" type="radio"/>
+<div class="peer-checked:border-primary absolute inset-0 border-2 border-transparent rounded-[20px] transition-colors pointer-events-none"></div>
+<div class="w-12 h-12 bg-secondary-container rounded-xl flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-on-secondary-container text-[28px]">account_balance_wallet</span>
+</div>
+<div class="flex-grow">
+<p class="font-label-md text-label-md text-on-surface">Digital Wallet</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Amazon Pay, MobiKwik</p>
+</div>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center peer-checked:border-primary peer-checked:bg-primary transition-all">
+<div class="w-2.5 h-2.5 rounded-full bg-white opacity-0 peer-checked:opacity-100"></div>
+</div>
+</label>
+</div>
+</section>
+<!-- Security Footer -->
+<div class="mt-12 flex flex-col items-center gap-4 text-center">
+<div class="flex items-center gap-2 px-4 py-2 bg-primary-container/10 rounded-full border border-primary/20 security-badge-glow">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">shield_with_heart</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">PCI-DSS COMPLIANT SECURE SERVER</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant max-w-xs">
+                Your payment information is encrypted and processed through a secure gateway. We never store your card details.
+            </p>
+</div>
+</main>
+<!-- Bottom Action Bar -->
+<div class="sticky bottom-0 w-full bg-surface-container-lowest p-gutter shadow-[0px_-4px_20px_rgba(0,0,0,0.05)] md:static md:shadow-none md:bg-transparent md:max-w-2xl md:mx-auto">
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-4 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all duration-200 shadow-lg shadow-primary/20" id="pay-now-btn">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+            <span id="pay-now-label">Pay Now • ₹0.00</span>
+        </button>
+</div>
+
+<!-- UPI Payment Confirmation Overlay -->
+<div class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-6" id="upi-confirm-overlay">
+<div class="bg-surface rounded-3xl p-xl w-full max-w-sm text-center shadow-2xl">
+<div class="w-16 h-16 mx-auto rounded-full bg-secondary-container flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-on-secondary-container text-3xl">payments</span>
+</div>
+<h3 class="font-title-md text-title-md text-on-surface mb-2">Confirm UPI Payment</h3>
+<p class="font-body-md text-on-surface-variant mb-6">If your UPI app opened, complete the payment there, then confirm below. If nothing opened, make sure a UPI app (Google Pay, PhonePe, etc.) is installed on this device.</p>
+<button class="w-full bg-primary text-on-primary font-label-md py-3 rounded-xl mb-2 hover:opacity-90 active:scale-95 transition-all" id="upi-confirm-paid">Yes, I've Paid</button>
+<button class="w-full text-on-surface-variant font-label-md py-3 rounded-xl hover:bg-surface-container transition-all" id="upi-confirm-cancel">Cancel / Try Again</button>
+</div>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('input[name="payment"]').forEach(input => {
+            input.addEventListener('change', (e) => {
+                // Haptic feedback simulation if supported
+                if (window.navigator.vibrate) {
+                    window.navigator.vibrate(10);
+                }
+            });
+        });
+
+        // Add visual feedback on click
+        document.querySelectorAll('label').forEach(label => {
+            label.addEventListener('click', function() {
+                this.classList.add('scale-[0.98]');
+                setTimeout(() => this.classList.remove('scale-[0.98]'), 100);
+            });
+        });
+    </script>
+<script>
+    auth.onAuthStateChanged(user => {
+        if (!user) window.location.href = 'login.html';
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const TAX_RATE = 0.04;
+
+    async function loadOrder() {
+        let items = [];
+        if (token) {
+            const doc = await db.collection('sessions').doc(token).get();
+            if (doc.exists) items = doc.data().items || [];
+        }
+        if (items.length === 0) items = Cart.get(); // fallback
+
+        const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+        const tax = subtotal * TAX_RATE;
+        const total = subtotal + tax;
+        const qty = items.reduce((s, i) => s + i.qty, 0);
+
+        document.getElementById('order-item-count').textContent = `${qty} Item${qty === 1 ? '' : 's'}`;
+        document.getElementById('order-subtotal').textContent = `₹${subtotal.toFixed(2)}`;
+        document.getElementById('order-tax').textContent = `₹${tax.toFixed(2)}`;
+        document.getElementById('order-total').textContent = `₹${total.toFixed(2)}`;
+        document.getElementById('pay-now-label').textContent = `Pay Now • ₹${total.toFixed(2)}`;
+    }
+    loadOrder();
+
+    // ---------------------------------------------------------
+    // UPI payment — opens the customer's UPI app via a deep link.
+    // ⚠️ IMPORTANT: replace MERCHANT_UPI_ID below with a real UPI ID
+    // before your demo (e.g. your own Google Pay/PhonePe UPI ID), or
+    // the customer's UPI app will show "invalid UPI ID" when it opens.
+    // NOTE: this is a demo-grade integration — there's no automatic
+    // server-side confirmation that the payment actually succeeded,
+    // since that requires a real payment gateway (e.g. Razorpay) with
+    // a backend. The customer self-confirms via the dialog below.
+    // ---------------------------------------------------------
+    const MERCHANT_UPI_ID = "your-upi-id@okhdfcbank"; // <-- replace this
+    const MERCHANT_NAME = "SkpQ Store";
+
+    function buildUpiLink(amount, note) {
+        const params = new URLSearchParams({
+            pa: MERCHANT_UPI_ID,
+            pn: MERCHANT_NAME,
+            am: amount.toFixed(2),
+            cu: "INR",
+            tn: note
+        });
+        return `upi://pay?${params.toString()}`;
+    }
+
+    async function finalizePaidOrder() {
+        if (token) {
+            await db.collection('sessions').doc(token).update({ status: 'paid' });
+        }
+        Cart.clear();
+        window.location.href = 'dashboard.html';
+    }
+
+    document.getElementById('upi-confirm-paid').addEventListener('click', async () => {
+        document.getElementById('upi-confirm-overlay').classList.add('hidden');
+        document.getElementById('upi-confirm-overlay').classList.remove('flex');
+        try {
+            await finalizePaidOrder();
+        } catch (err) {
+            console.error(err);
+            alert('Could not complete payment: ' + err.message);
+        }
+    });
+
+    document.getElementById('upi-confirm-cancel').addEventListener('click', () => {
+        document.getElementById('upi-confirm-overlay').classList.add('hidden');
+        document.getElementById('upi-confirm-overlay').classList.remove('flex');
+        const btn = document.getElementById('pay-now-btn');
+        btn.disabled = false;
+        loadOrder(); // restore the correct Pay Now label
+    });
+
+    document.getElementById('pay-now-btn').addEventListener('click', async () => {
+        const btn = document.getElementById('pay-now-btn');
+        const selectedMethod = document.querySelector('input[name="payment"]:checked')?.value;
+
+        if (selectedMethod === 'upi') {
+            const totalText = document.getElementById('order-total').textContent.replace('₹', '');
+            const total = parseFloat(totalText) || 0;
+            const link = buildUpiLink(total, `SkpQ Order ${token || ''}`);
+
+            // Open the UPI app
+            window.location.href = link;
+
+            // Show the confirmation dialog after a short delay (gives the
+            // UPI app time to open before the dialog appears on return)
+            setTimeout(() => {
+                document.getElementById('upi-confirm-overlay').classList.remove('hidden');
+                document.getElementById('upi-confirm-overlay').classList.add('flex');
+            }, 1200);
+            return;
+        }
+
+        // Card / Wallet — demo placeholder (no real processing wired up)
+        btn.disabled = true;
+        document.getElementById('pay-now-label').textContent = 'Processing...';
+        try {
+            await finalizePaidOrder();
+        } catch (err) {
+            console.error(err);
+            alert('Payment could not be completed: ' + err.message);
+            btn.disabled = false;
+        }
+    });
+</script>
+</body></html>

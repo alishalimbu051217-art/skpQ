@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkpQ">
+<script src="js/pwa.js" defer></script>
+<title>SkpQ Employee Portal</title>
+<link rel="stylesheet" href="css/tailwind.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .scanner-overlay {
+            background: rgba(0, 0, 0, 0.4);
+            clip-path: polygon(0% 0%, 0% 100%, 10% 100%, 10% 15%, 90% 15%, 90% 85%, 10% 85%, 10% 100%, 100% 100%, 100% 0%);
+        }
+        @keyframes scan {
+            0% { top: 15%; }
+            50% { top: 85%; }
+            100% { top: 15%; }
+        }
+        .scan-line {
+            animation: scan 3s ease-in-out infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="js/cart.js"></script>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-gutter w-full h-16 sticky top-0 z-50 bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-primary-container transition-colors active:opacity-80" onclick="window.location.href='employee-home.html'">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary font-black tracking-tight">Staff Portal</h1>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-label-sm font-bold text-on-surface">Alex Johnson</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Terminal 04</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center border-2 border-primary">
+<span class="material-symbols-outlined text-on-primary-container">person</span>
+</div>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center p-gutter max-w-4xl mx-auto w-full">
+<!-- Dashboard Intro -->
+<div class="text-center mb-xl">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Ready to Scan</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Position the customer's QR code within the frame to fetch order details.</p>
+</div>
+<!-- Scanner Viewfinder Container -->
+<div class="relative w-full aspect-square max-w-[400px] rounded-[32px] overflow-hidden shadow-[0px_10px_30px_rgba(0,0,0,0.1)] bg-black border-4 border-surface">
+<!-- Camera Fallback (shown until the QR reader takes over) -->
+<div class="absolute inset-0 bg-cover bg-center" id="camera-fallback" data-alt="A POV perspective looking through a smartphone camera lens at a clean, modern retail environment. The lighting is bright and professional with teal and emerald green accents in the background. A blurry customer hand is visible holding up a smartphone with a high-contrast black and white QR code displayed on the screen, ready to be scanned by the interface." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDgGAcdiT9VPoY90LPsfbFgIwevMDH9bUpSxjnWodf8EPa6ZKokxmOMkB09GfGKw0rUX-EN-zkupOd8FFSbLpVG590wQMDPUR0B3OlsAFKTyq2SuVwCwxLuJAN8g-8cpbE03jJnNgCnFRb5UGdrBNSAUA4ddT0jWBzG8tuLQb3dlinckRzdr68AcSLunFO0oykG4KWEME-u8Ys1mDCtfw1dEUqaUlFjXkwyFdBYpEF3dY-7rr0_hquEcQ')"></div>
+<!-- html5-qrcode injects its <video> into this div once the camera starts -->
+<div class="absolute inset-0 [&_video]:w-full [&_video]:h-full [&_video]:object-cover" id="qr-reader"></div>
+<!-- Dark Overlay with Cutout -->
+<div class="absolute inset-0 scanner-overlay"></div>
+<!-- Viewfinder Brackets -->
+<div class="absolute inset-0 pointer-events-none">
+<!-- Top Left -->
+<div class="absolute top-[15%] left-[10%] w-12 h-12 border-t-4 border-l-4 border-primary rounded-tl-lg"></div>
+<!-- Top Right -->
+<div class="absolute top-[15%] right-[10%] w-12 h-12 border-t-4 border-r-4 border-primary rounded-tr-lg"></div>
+<!-- Bottom Left -->
+<div class="absolute bottom-[15%] left-[10%] w-12 h-12 border-b-4 border-l-4 border-primary rounded-bl-lg"></div>
+<!-- Bottom Right -->
+<div class="absolute bottom-[15%] right-[10%] w-12 h-12 border-b-4 border-r-4 border-primary rounded-br-lg"></div>
+<!-- Animated Scan Line -->
+<div class="scan-line absolute left-[10%] right-[10%] h-0.5 bg-primary/60 shadow-[0_0_15px_rgba(0,104,95,0.8)] z-10"></div>
+</div>
+<!-- Torch / Zoom Controls -->
+<div class="absolute bottom-md left-1/2 -translate-x-1/2 flex gap-gutter">
+<button class="w-12 h-12 rounded-full bg-surface/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-surface/40 transition-colors">
+<span class="material-symbols-outlined">flashlight_on</span>
+</button>
+<button class="w-12 h-12 rounded-full bg-surface/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-surface/40 transition-colors">
+<span class="material-symbols-outlined">zoom_in</span>
+</button>
+</div>
+</div>
+<!-- Manual Entry & Actions Section -->
+<div class="w-full max-w-[400px] mt-xl space-y-lg">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">pin</span>
+</div>
+<input class="block w-full h-[56px] pl-12 pr-4 bg-surface border-2 border-outline-variant rounded-xl font-body-md text-on-surface focus:ring-0 focus:border-primary transition-all placeholder:text-outline" id="manual-token-input" placeholder="Enter manual token number" type="text"/>
+<div class="absolute inset-y-0 right-2 flex items-center">
+<button class="h-10 px-4 bg-secondary-container text-on-secondary-container rounded-lg font-label-md hover:bg-secondary-fixed transition-colors" id="fetch-order-btn">
+                        FETCH ORDER
+                    </button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<button class="flex flex-col items-center justify-center p-md bg-surface border border-outline-variant rounded-2xl hover:bg-surface-container transition-all group">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary">history</span>
+</div>
+<span class="font-label-md text-on-surface">Recent Scans</span>
+</button>
+<button class="flex flex-col items-center justify-center p-md bg-surface border border-outline-variant rounded-2xl hover:bg-surface-container transition-all group" onclick="window.location.href='support.html'">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary">support_agent</span>
+</div>
+<span class="font-label-md text-on-surface">Get Help</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container shadow-[0px_-4px_20px_rgba(0,0,0,0.05)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="employee-home.html">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-xl px-6 py-1 active:scale-90 transition-transform duration-200" href="employee-dashboard.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">barcode_scanner</span>
+<span class="font-label-sm text-label-sm">Scan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="support.html">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="font-label-sm text-label-sm">Support</span>
+</a>
+</nav>
+<script>
+    // ---------------------------------------------------------
+    // Require an employee session
+    // ---------------------------------------------------------
+    auth.onAuthStateChanged(user => {
+        if (!user || localStorage.getItem('skpq_role') !== 'employee') {
+            window.location.href = 'employee-login.html';
+        }
+    });
+
+    // ---------------------------------------------------------
+    // Fetch a customer's session by token and go verify it
+    // ---------------------------------------------------------
+    async function fetchOrder(token) {
+        token = (token || '').trim();
+        if (!token) return;
+        const doc = await db.collection('sessions').doc(token).get();
+        if (!doc.exists) {
+            alert('No order found for token ' + token);
+            return;
+        }
+        window.location.href = `order-verification.html?token=${token}`;
+    }
+
+    const fetchBtn = document.getElementById('fetch-order-btn');
+    fetchBtn.addEventListener('click', () => {
+        fetchOrder(document.getElementById('manual-token-input').value);
+    });
+    document.getElementById('manual-token-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') fetchOrder(e.target.value);
+    });
+
+    // ---------------------------------------------------------
+    // QR scanning (html5-qrcode)
+    // ---------------------------------------------------------
+    if (typeof Html5Qrcode !== 'undefined') {
+        const qr = new Html5Qrcode("qr-reader");
+        qr.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            decodedText => {
+                qr.stop().catch(() => {});
+                fetchOrder(decodedText);
+            },
+            () => { /* ignore per-frame scan misses */ }
+        ).then(() => {
+            document.getElementById('camera-fallback').style.display = 'none';
+        }).catch(err => {
+            console.warn('Camera unavailable, falling back to manual entry:', err);
+        });
+    }
+
+        // Mock camera focus effect
+        document.addEventListener('mousemove', (e) => {
+            const scanner = document.querySelector('.scanner-overlay');
+            if (scanner) {
+                // Future interactive focus effects can go here
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkpQ">
+<script src="js/pwa.js" defer></script>
+<title>Verification Success - SkpQ</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/tailwind.css">
+<style>
+        @keyframes drawCheck {
+            0% { stroke-dashoffset: 48; opacity: 0; }
+            50% { opacity: 1; }
+            100% { stroke-dashoffset: 0; opacity: 1; }
+        }
+        @keyframes scaleUp {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .animate-draw {
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: drawCheck 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+            animation-delay: 0.2s;
+        }
+        .animate-scale {
+            animation: scaleUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .confetti-particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: confetti 2.5s linear forwards;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/cart.js"></script>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-fixed-dim selection:text-on-primary-fixed overflow-hidden">
+<!-- Top App Bar (As specified in JSON, but suppressed as per 'Transactional/Success' Rule) -->
+<!-- Rule applied: Transactional screens hide the global nav shell to prioritize the canvas -->
+<main class="relative min-h-screen flex flex-col items-center justify-center px-gutter overflow-hidden">
+<!-- Atmospheric Background Layer -->
+<div class="absolute inset-0 pointer-events-none opacity-30">
+<div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary-fixed blur-[120px] rounded-full"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary-fixed blur-[100px] rounded-full"></div>
+</div>
+<!-- Success Animation Container -->
+<div class="relative z-10 flex flex-col items-center text-center max-w-md w-full">
+<!-- Checkmark Glyph -->
+<div class="animate-scale mb-lg">
+<div class="relative flex items-center justify-center w-32 h-32 md:w-40 md:h-40 bg-primary-container rounded-full shadow-[0px_10px_30px_rgba(13,148,136,0.2)]">
+<svg class="w-16 h-16 md:w-20 md:h-20 fill-none stroke-on-primary stroke-[3]" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<path class="animate-draw" d="M20 6L9 17L4 12"></path>
+</svg>
+<!-- Pulse rings -->
+<div class="absolute inset-0 border-4 border-primary rounded-full animate-ping opacity-20"></div>
+</div>
+</div>
+<!-- Message Group -->
+<div class="space-y-sm mb-xl">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">
+                    Verified!
+                </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant flex items-center justify-center gap-2">
+                    Redirecting to payment
+                    <span class="flex gap-1">
+<span class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+<span class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+<span class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></span>
+</span>
+</p>
+</div>
+<!-- Manual Action Button -->
+<div class="w-full space-y-md">
+<button class="w-full h-14 bg-primary text-on-primary font-title-md text-title-md rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 group" id="proceed-btn">
+                    Proceed to Payment
+                    <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+<p class="font-label-sm text-label-sm text-on-surface-variant opacity-60">
+                    If you are not redirected automatically, click the button above.
+                </p>
+</div>
+</div>
+<!-- Success Details Bento-ish Layout (Subtle context) -->
+<div class="absolute bottom-lg left-gutter right-gutter max-w-lg mx-auto grid grid-cols-2 gap-sm opacity-0 animate-[fadeIn_0.5s_ease_1s_forwards]">
+<div class="bg-surface-container-low p-md rounded-xl border border-outline-variant flex items-center gap-md">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">verified_user</span>
+</div>
+<div class="text-left">
+<div class="font-label-sm text-label-sm text-on-surface-variant">Auth Status</div>
+<div class="font-label-md text-label-md text-on-surface">Secure</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-md rounded-xl border border-outline-variant flex items-center gap-md">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">timer</span>
+</div>
+<div class="text-left">
+<div class="font-label-sm text-label-sm text-on-surface-variant">Time</div>
+<div class="font-label-md text-label-md text-on-surface">0.8s</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Confetti Script -->
+<script>
+        function createConfetti() {
+            const container = document.body;
+            const colors = ['#0D9488', '#00685f', '#89f5e7', '#a6f2d1', '#1b6b51'];
+            
+            for (let i = 0; i < 40; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti-particle';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = (Math.random() * 8 + 4) + 'px';
+                confetti.style.height = confetti.style.width;
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                confetti.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                confetti.style.animationDelay = (Math.random() * 0.5) + 's';
+                
+                container.appendChild(confetti);
+                
+                // Cleanup
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+
+        // Trigger confetti on load
+        window.addEventListener('load', () => {
+            setTimeout(createConfetti, 300);
+            
+            // Auto-redirect simulation
+            setTimeout(() => {
+                console.log("Redirecting...");
+                // In a real app: window.location.href = '/checkout';
+            }, 3000);
+        });
+
+        // Keyframe for fade in
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token') || '';
+
+    document.getElementById('proceed-btn').addEventListener('click', () => {
+        window.location.href = `payment.html?token=${token}`;
+    });
+
+    // Auto-redirect after a short pause
+    setTimeout(() => {
+        window.location.href = `payment.html?token=${token}`;
+    }, 3000);
+</script>
+</body></html>

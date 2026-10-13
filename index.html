@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkpQ">
+<script src="js/pwa.js" defer></script>
+<title>SkpQ - Role Selection</title>
+<link rel="stylesheet" href="css/tailwind.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #f9f9ff;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+        }
+        .role-card:active {
+            transform: scale(0.98);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/cart.js"></script>
+</head>
+<body class="text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<main class="min-h-screen flex flex-col items-center justify-between py-xl px-container-padding max-w-md mx-auto relative overflow-hidden">
+<!-- Background Atmospheric Element -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-primary-fixed opacity-20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute -bottom-24 -left-24 w-64 h-64 bg-secondary-fixed opacity-20 rounded-full blur-3xl pointer-events-none"></div>
+<!-- Brand Header -->
+<header class="w-full flex flex-col items-center mt-xl z-10">
+<div class="mb-sm text-primary">
+<span class="material-symbols-outlined text-[48px]" style="font-variation-settings: 'FILL' 1;">
+                    qr_code_scanner
+                </span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary tracking-tight">SkpQ</h1>
+<p class="font-label-md text-label-md text-on-surface-variant mt-xs opacity-70">Retail Intelligence at your fingertips</p>
+</header>
+<!-- Role Selection Canvas -->
+<div class="w-full flex flex-col gap-lg z-10 flex-grow justify-center">
+<h2 class="font-title-md text-title-md text-center text-on-surface mb-md">How will you be using SkpQ today?</h2>
+<!-- Customer Card -->
+<button class="role-card group relative w-full bg-surface-container-lowest border-2 border-transparent hover:border-primary rounded-[24px] p-lg flex items-center gap-lg transition-all duration-300 shadow-[0px_4px_20px_rgba(0,0,0,0.05)] text-left overflow-hidden" onclick="selectRole('customer')">
+<div class="w-16 h-16 rounded-2xl bg-primary-fixed flex items-center justify-center text-primary-fixed-variant group-hover:bg-primary group-hover:text-on-primary transition-colors duration-300">
+<span class="material-symbols-outlined text-[32px]">
+                        person
+                    </span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-md text-title-md text-on-surface">Customer</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Scan &amp; shop on the go</span>
+</div>
+<span class="material-symbols-outlined ml-auto text-outline group-hover:text-primary transition-colors">
+                    chevron_right
+                </span>
+<!-- Decorative element -->
+<div class="absolute -bottom-4 -right-4 w-12 h-12 bg-primary/5 rounded-full group-hover:scale-[3] transition-transform duration-500"></div>
+</button>
+<!-- Employee Card -->
+<button class="role-card group relative w-full bg-surface-container-lowest border-2 border-transparent hover:border-primary rounded-[24px] p-lg flex items-center gap-lg transition-all duration-300 shadow-[0px_4px_20px_rgba(0,0,0,0.05)] text-left overflow-hidden" onclick="selectRole('employee')">
+<div class="w-16 h-16 rounded-2xl bg-secondary-container flex items-center justify-center text-on-secondary-container group-hover:bg-primary group-hover:text-on-primary transition-colors duration-300">
+<span class="material-symbols-outlined text-[32px]">
+                        badge
+                    </span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-md text-title-md text-on-surface">Employee</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Inventory &amp; staff portal</span>
+</div>
+<span class="material-symbols-outlined ml-auto text-outline group-hover:text-primary transition-colors">
+                    chevron_right
+                </span>
+<!-- Decorative element -->
+<div class="absolute -bottom-4 -right-4 w-12 h-12 bg-secondary/5 rounded-full group-hover:scale-[3] transition-transform duration-500"></div>
+</button>
+</div>
+<!-- Footer Info -->
+<footer class="w-full text-center z-10 py-md">
+<p class="font-label-sm text-label-sm text-on-surface-variant opacity-60">Version 2.4.0 • Enterprise Edition</p>
+</footer>
+</main>
+<!-- Role Selection Interaction Script -->
+<script>
+        function selectRole(role) {
+            console.log("Selected role:", role);
+            
+            // Visual feedback
+            const cards = document.querySelectorAll('.role-card');
+            cards.forEach(card => {
+                if(card.innerText.toLowerCase().includes(role)) {
+                    card.classList.add('ring-2', 'ring-primary', 'bg-primary-container/10');
+                }
+            });
+
+            // Route to the correct login flow
+            setTimeout(() => {
+                window.location.href = role === 'customer' ? 'login.html' : 'employee-login.html';
+            }, 250);
+        }
+
+        // Add subtle hover tracking effect for cards
+        document.querySelectorAll('.role-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+    </script>
+<script>
+    // If someone's already signed in (customer or employee), skip role
+    // selection + login entirely and take them straight to their home page.
+    auth.onAuthStateChanged(user => {
+        if (!user) return; // not signed in — show role selection normally
+        if (localStorage.getItem('skpq_role') === 'employee') {
+            window.location.href = 'employee-home.html';
+        } else {
+            window.location.href = 'dashboard.html';
+        }
+    });
+</script>
+<!-- Custom Cursor / Interaction CSS -->
+<style>
+        .role-card {
+            position: relative;
+        }
+        .role-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle 80px at var(--mouse-x, 0) var(--mouse-y, 0), rgba(0, 104, 95, 0.05), transparent);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .role-card:hover::before {
+            opacity: 1;
+        }
+    </style>
+</body></html>

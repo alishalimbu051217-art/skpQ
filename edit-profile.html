@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkpQ">
+<script src="js/pwa.js" defer></script>
+<link rel="stylesheet" href="css/tailwind.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .profile-card-gradient {
+            background: linear-gradient(135deg, #00685f 0%, #1b6b51 100%);
+        }
+        /* Custom scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #bcc9c6;
+            border-radius: 10px;
+        }
+    </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/cart.js"></script>
+</head>
+<body class="bg-background text-on-background">
+<div class="max-w-md mx-auto min-h-screen flex flex-col">
+<header class="sticky top-0 z-20 bg-background/90 backdrop-blur-sm flex items-center gap-3 px-gutter h-16 border-b border-outline-variant/30">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors" onclick="window.location.href='profile.html'">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<h1 class="font-title-md text-title-md text-on-surface">Edit Profile</h1>
+</header>
+
+<main class="flex-1 px-gutter py-lg space-y-lg pb-32">
+
+<!-- Name -->
+<div class="space-y-xs">
+<label class="text-xs font-label-sm text-on-surface-variant" for="name-input">Full Name</label>
+<input id="name-input" type="text" placeholder="Your name" class="w-full h-12 px-4 bg-surface-container-low border border-outline-variant rounded-xl focus:border-primary outline-none text-on-surface"/>
+</div>
+
+<!-- Age & Gender side by side -->
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="text-xs font-label-sm text-on-surface-variant" for="age-input">Age</label>
+<input id="age-input" type="number" min="1" max="120" placeholder="--" class="w-full h-12 px-4 bg-surface-container-low border border-outline-variant rounded-xl focus:border-primary outline-none text-on-surface"/>
+</div>
+<div class="space-y-xs">
+<label class="text-xs font-label-sm text-on-surface-variant" for="gender-input">Gender</label>
+<select id="gender-input" class="w-full h-12 px-3 bg-surface-container-low border border-outline-variant rounded-xl focus:border-primary outline-none text-on-surface">
+<option value="">Select</option>
+<option value="male">Male</option>
+<option value="female">Female</option>
+<option value="prefer_not_to_say">Prefer not to say</option>
+</select>
+</div>
+</div>
+
+<!-- Phone -->
+<div class="space-y-xs">
+<label class="text-xs font-label-sm text-on-surface-variant" for="phone-input">Phone Number</label>
+<input id="phone-input" type="tel" placeholder="e.g. 98765 43210" class="w-full h-12 px-4 bg-surface-container-low border border-outline-variant rounded-xl focus:border-primary outline-none text-on-surface"/>
+</div>
+
+<!-- Email (read-only) -->
+<div class="space-y-xs">
+<label class="text-xs font-label-sm text-on-surface-variant">Email</label>
+<div class="w-full h-12 px-4 bg-surface-container-low/50 border border-outline-variant/50 rounded-xl flex items-center text-on-surface-variant" id="email-display">--</div>
+</div>
+
+<button class="w-full h-14 bg-primary text-on-primary rounded-xl font-title-md shadow-md active:scale-95 transition-all" id="save-btn">
+Save Changes
+</button>
+<p class="text-center text-sm text-secondary hidden" id="save-confirm">Saved!</p>
+
+<!-- Change Password (only shown for email/password accounts) -->
+<div class="pt-lg border-t border-outline-variant/30 space-y-md hidden" id="password-section">
+<h2 class="font-title-md text-on-surface">Change Password</h2>
+<input id="current-password" type="password" placeholder="Current password" class="w-full h-12 px-4 bg-surface-container-low border border-outline-variant rounded-xl focus:border-primary outline-none text-on-surface"/>
+<input id="new-password" type="password" placeholder="New password (min 6 characters)" class="w-full h-12 px-4 bg-surface-container-low border border-outline-variant rounded-xl focus:border-primary outline-none text-on-surface"/>
+<button class="w-full h-12 border-2 border-primary text-primary rounded-xl font-label-md active:scale-95 transition-all" id="change-password-btn">
+Update Password
+</button>
+<p class="text-center text-sm hidden" id="password-msg"></p>
+</div>
+
+<p class="text-xs text-center text-on-surface-variant pt-md" id="google-account-note" style="display:none;">
+You signed in with Google, so there's no separate SkpQ password to change — manage your Google account password through your Google account settings instead.
+</p>
+
+</main>
+</div>
+
+<script>
+    let currentUid = null;
+
+    auth.onAuthStateChanged(user => {
+        if (!user) { window.location.href = 'login.html'; return; }
+        currentUid = user.uid;
+        document.getElementById('email-display').textContent = user.email || '--';
+        document.getElementById('name-input').value = user.displayName || '';
+
+        const isPasswordAccount = user.providerData.some(p => p.providerId === 'password');
+        if (isPasswordAccount) {
+            document.getElementById('password-section').classList.remove('hidden');
+        } else {
+            document.getElementById('google-account-note').style.display = 'block';
+        }
+
+        loadProfileDoc();
+    });
+
+    async function loadProfileDoc() {
+        try {
+            const doc = await db.collection('users').doc(currentUid).get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.age) document.getElementById('age-input').value = data.age;
+                if (data.gender) document.getElementById('gender-input').value = data.gender;
+                if (data.phone) document.getElementById('phone-input').value = data.phone;
+                if (data.name) document.getElementById('name-input').value = data.name;
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    document.getElementById('save-btn').addEventListener('click', async () => {
+        const name = document.getElementById('name-input').value.trim();
+        const age = parseInt(document.getElementById('age-input').value, 10) || null;
+        const gender = document.getElementById('gender-input').value || null;
+        const phone = document.getElementById('phone-input').value.trim() || null;
+
+        try {
+            const user = auth.currentUser;
+            if (name && name !== user.displayName) {
+                await user.updateProfile({ displayName: name });
+            }
+            await db.collection('users').doc(currentUid).set({ name, age, gender, phone }, { merge: true });
+
+            const confirmEl = document.getElementById('save-confirm');
+            confirmEl.classList.remove('hidden');
+            setTimeout(() => confirmEl.classList.add('hidden'), 2000);
+        } catch (err) {
+            console.error(err);
+            alert('Could not save: ' + err.message);
+        }
+    });
+
+    document.getElementById('change-password-btn').addEventListener('click', async () => {
+        const current = document.getElementById('current-password').value;
+        const next = document.getElementById('new-password').value;
+        const msg = document.getElementById('password-msg');
+        msg.classList.remove('hidden');
+
+        if (!current || !next) {
+            msg.textContent = 'Enter your current and new password.';
+            msg.className = 'text-center text-sm text-error';
+            return;
+        }
+        if (next.length < 6) {
+            msg.textContent = 'New password must be at least 6 characters.';
+            msg.className = 'text-center text-sm text-error';
+            return;
+        }
+
+        try {
+            const user = auth.currentUser;
+            const cred = firebase.auth.EmailAuthProvider.credential(user.email, current);
+            await user.reauthenticateWithCredential(cred);
+            await user.updatePassword(next);
+            msg.textContent = 'Password updated successfully.';
+            msg.className = 'text-center text-sm text-secondary';
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+        } catch (err) {
+            console.error(err);
+            msg.textContent = err.code === 'auth/wrong-password'
+                ? 'Current password is incorrect.'
+                : 'Could not update password: ' + err.message;
+            msg.className = 'text-center text-sm text-error';
+        }
+    });
+</script>
+</body></html>

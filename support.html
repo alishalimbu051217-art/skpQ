@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkpQ">
+<script src="js/pwa.js" defer></script>
+<link rel="stylesheet" href="css/tailwind.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<title>SkpQ Staff Portal - Support</title>
+<style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; display: inline-block; line-height: 1; }
+    body { font-family: 'Inter', sans-serif; }
+</style>
+</head>
+<body class="bg-[#F4F6F8] text-[#1B1F23] min-h-screen flex flex-col">
+<header class="flex items-center gap-4 px-6 h-16 border-b border-black/10 bg-white">
+<button class="p-2 rounded-full hover:bg-black/5" onclick="window.location.href='employee-login.html'">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-bold text-lg text-[#0D9488]">Staff Support</h1>
+</header>
+<main class="flex-1 max-w-lg mx-auto w-full px-6 py-10 space-y-6">
+<section class="bg-white rounded-2xl border border-black/10 p-6">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-[#0D9488]">support_agent</span>
+<h2 class="font-bold text-lg">IT Support</h2>
+</div>
+<p class="text-sm text-black/60 mb-4">Having trouble logging in, or something not working on the floor terminal? Reach the store's IT desk directly.</p>
+<a class="block text-center bg-[#0D9488] text-white font-semibold py-3 rounded-xl hover:bg-[#0b7a6f] transition-colors" href="mailto:it-support@skpq-store.example?subject=Staff%20Portal%20Issue">Email IT Support</a>
+</section>
+<section class="bg-white rounded-2xl border border-black/10 p-6">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-[#0D9488]">badge</span>
+<h2 class="font-bold text-lg">Employee ID / Access</h2>
+</div>
+<p class="text-sm text-black/60">Badge-based login isn't set up yet — for now, sign in with the shared staff email and password given to you by store management. If you don't have credentials, contact your shift manager.</p>
+</section>
+<p class="text-xs text-center text-black/40">Authorized Personnel Only. All activities are logged under internal security protocols.</p>
+</main>
+</body></html>

@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Checkout sessions: one doc per generated token.
+    // - Signed-in customers can create their own session and read it.
+    // - Only signed-in users can update status (locked down further once
+    //   you add custom claims for "employee" — see README "Hardening").
+    match /sessions/{token} {
+      allow create: if request.auth != null
+                    && request.resource.data.customerUid == request.auth.uid;
+
+      allow read: if request.auth != null; // customer + employee both read by token
+
+      allow update: if request.auth != null; // TODO: restrict to employee accounts only
+    }
+
+    // Customer profile data (avatar, age). Owner-only.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Product catalog (barcode -> name/category/price). Readable by any
+    // signed-in user (customer scanning); write access should be locked
+    // down to an admin account before real deployment — see
+    // import-products.html's warning banner.
+    match /products/{barcode} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null; // TODO: restrict to an admin custom claim
+    }
+  }
+}
