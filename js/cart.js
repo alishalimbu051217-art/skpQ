@@ -48,8 +48,7 @@ const Cart = {
 // ---------------------------------------------------------
 const Theme = {
   init() {
-    const saved = localStorage.getItem("theme") ||
-      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+   const saved = localStorage.getItem("theme") || 'light';
     document.documentElement.classList.toggle("dark", saved === "dark");
   },
   toggle() {
