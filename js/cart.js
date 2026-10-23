@@ -25,10 +25,17 @@ const Cart = {
     return items;
   },
 
-  removeItem(code) {
-    const items = this.get().filter(i => i.code !== code);
+    removeItem(code) {
+    let items = this.get();
+    const item = items.find(i => i.code === code);
+    if (item && item.qty > 1) {
+      item.qty -= 1;
+    } else {
+      items = items.filter(i => i.code !== code);
+    }
     this.save(items);
     return items;
+  },
   },
 
   total() {
