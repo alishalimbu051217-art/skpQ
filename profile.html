@@ -273,11 +273,18 @@
                 const d = doc.data();
                 const date = d.createdAt ? d.createdAt.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '--';
                                 const itemCount = (d.items || []).reduce((s, i) => s + i.qty, 0);
-                const itemsHtml = (d.items || []).map(i => `
-                    <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:14px;">
-                        <span>${i.name || i.code || 'Item'} × ${i.qty}</span>
-                        <span>₹${((i.price || 0) * i.qty).toFixed(2)}</span>
+                                const itemRows = (d.items || []).map(i => `
+                    <div style="display:grid;grid-template-columns:1fr 44px 80px;gap:8px;padding:6px 0;font-size:14px;align-items:center;">
+                        <span>${i.name || i.code || 'Item'}</span>
+                        <span style="text-align:center;">${i.qty}</span>
+                        <span style="text-align:right;">₹${((i.price || 0) * i.qty).toFixed(2)}</span>
                     </div>`).join('');
+                const itemsHtml = itemRows ? `
+                    <div style="display:grid;grid-template-columns:1fr 44px 80px;gap:8px;padding:4px 0;font-size:12px;font-weight:600;opacity:0.7;">
+                        <span>Item</span>
+                        <span style="text-align:center;">Qty</span>
+                        <span style="text-align:right;">Amount</span>
+                    </div>` + itemRows : '';
                 return `
                     <details style="padding:10px 8px;">
                         <summary style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;list-style:none;">
