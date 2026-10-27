@@ -194,13 +194,14 @@
     function setAvatarDisplay(photoURL) {
         const img = document.getElementById('avatar-img');
         const fallback = document.getElementById('avatar-fallback');
-        if (photoURL) {
+                if (photoURL) {
             img.src = photoURL;
             img.classList.remove('hidden');
-            fallback.classList.add('hidden');
+            img.style.display = 'block';
+            fallback.style.display = 'none';
         } else {
-            img.classList.add('hidden');
-            fallback.classList.remove('hidden');
+            img.style.display = 'none';
+            fallback.style.display = 'inline-block';
         }
     }
 
