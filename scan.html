@@ -15,6 +15,27 @@
 <meta name="apple-mobile-web-app-title" content="SkpQ">
 <script src="js/pwa.js" defer></script>
 <title>SkpQ - Scan Item</title>
+<script>
+// TEMPORARY DEBUG: shows any script error on screen so it can be screenshotted. Remove before final submission.
+(function () {
+function showDebug(msg) {
+var b = document.getElementById('mq-debug');
+if (!b) {
+b = document.createElement('div');
+b.id = 'mq-debug';
+b.style.cssText = 'position:fixed;left:8px;right:8px;top:70px;z-index:99999;background:#ba1a1a;color:#fff;font:12px/1.4 monospace;padding:8px 10px;border-radius:8px;white-space:pre-wrap;word-break:break-word;max-height:40vh;overflow:auto';
+(document.body || document.documentElement).appendChild(b);
+}
+b.textContent += msg + '\n';
+}
+window.addEventListener('error', function (e) {
+showDebug('ERROR: ' + e.message + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : ''));
+});
+window.addEventListener('unhandledrejection', function (e) {
+showDebug('PROMISE ERROR: ' + (e.reason && (e.reason.message || e.reason.name) || e.reason));
+});
+})();
+</script>
 <link rel="stylesheet" href="css/tailwind.css">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
@@ -71,6 +92,13 @@ padding: 0 22px; font-weight: 700; font-size: 15px; cursor: pointer;
 .mq-manual-msg.show { display: block; }
 .mq-manual-msg.error { color: #ba1a1a; }
 .mq-manual-msg.ok { color: #00685f; font-weight: 600; }
+
+/* ---- Camera state line ---- */
+.mq-state {
+position: absolute; top: 78px; left: 0; right: 0; z-index: 20; text-align: center;
+font-size: 12px; color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+pointer-events: none;
+}
 
 /* ---- Camera permission screen ---- */
 .mq-perm {
@@ -160,6 +188,8 @@ border-radius: 12px; padding: 8px 16px; font-weight: 700; font-size: 13px; curso
 <div class="absolute top-12 w-full text-center z-20">
 <p class="text-white font-title-md drop-shadow-md">Align barcode within the frame</p>
 </div>
+
+<p class="mq-state" id="camera-state">Loading scanner…</p>
 
 <!-- Camera problem message (only shown if the camera can't start) -->
 <div class="mq-camera-status" id="camera-status" hidden>
@@ -449,6 +479,11 @@ let scanLocked = false; // global cooldown — stops one physical barcode
 const CONSENSUS_WINDOW_MS = 2000; // how recent matching reads must be
 let recentReads = []; // { code, time }
 
+function setCameraState(text) {
+const el = document.getElementById('camera-state');
+if (el) el.textContent = text;
+}
+
 let cameraStream = null;
 let videoEl = null;
 let scanTimer = null;
@@ -458,6 +493,7 @@ let detectorReady = false;
 const scanCanvas = document.createElement('canvas');
 
 function showCameraProblem(message) {
+setCameraState('Camera is not running');
 document.getElementById('camera-status-text').textContent = message + ' You can still add items with the box at the bottom.';
 document.getElementById('camera-status').hidden = false;
 document.getElementById('perm-screen').hidden = true;
@@ -465,6 +501,7 @@ document.getElementById('camera-fallback').style.display = '';
 }
 
 function showPermissionScreen(mode) {
+setCameraState('Camera permission needed');
 const title = document.getElementById('perm-title');
 const text = document.getElementById('perm-text');
 const allow = document.getElementById('perm-allow');
@@ -496,8 +533,12 @@ return /FBAN|FBAV|Instagram|WhatsApp|Line\/|Snapchat|; wv\)/i.test(navigator.use
 async function getCameraPermissionState() {
 try {
 if (!navigator.permissions || !navigator.permissions.query) return null;
-const status = await navigator.permissions.query({ name: 'camera' });
-return status.state; // 'granted' | 'denied' | 'prompt'
+// Some browsers never answer this question, so give up after 1.5 seconds
+const answer = await Promise.race([
+navigator.permissions.query({ name: 'camera' }).then(st => st.state),
+new Promise(resolve => setTimeout(() => resolve(null), 1500))
+]);
+return answer; // 'granted' | 'denied' | 'prompt' | null
 } catch (e) {
 return null; // some browsers (e.g. Safari) don't support this check
 }
@@ -560,6 +601,7 @@ barcodeDetector = null;
 async function startCamera() {
 document.getElementById('camera-status').hidden = true;
 document.getElementById('perm-screen').hidden = true;
+setCameraState('Starting camera… (allow it if your browser asks)');
 
 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
 showCameraProblem('This browser does not allow camera access. Please open the site in Chrome or Safari.');
@@ -572,6 +614,7 @@ try {
 stream = await openCameraStream();
 } catch (err) {
 console.error('Camera failed:', err);
+setCameraState('Camera error: ' + ((err && err.name) || 'unknown'));
 if (/NotAllowed|Permission|Security/i.test((err && err.name) || '')) {
 showPermissionScreen('blocked');
 } else {
@@ -603,6 +646,7 @@ return;
 
 document.getElementById('camera-fallback').style.display = 'none';
 await initDetector();
+setCameraState('Camera ready. Hold a barcode inside the frame.');
 clearInterval(scanTimer);
 scanTimer = setInterval(scanFrame, 200);
 }
@@ -687,6 +731,7 @@ document.getElementById('camera-retry').addEventListener('click', () => startCam
 window.addEventListener('pagehide', stopCamera);
 
 async function initCamera() {
+setCameraState('Checking camera permission…');
 if (isInAppBrowser()) {
 showCameraProblem('This looks like an in-app browser (WhatsApp, Instagram, etc.), which often blocks the camera. Open skpq.onrender.com in Chrome or Safari.');
 return;
@@ -698,6 +743,7 @@ else showPermissionScreen('ask'); // new user: explain first, then ask
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+setCameraState('Starting…');
 renderCart();
 initCamera();
 });
