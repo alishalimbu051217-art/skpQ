@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkpQ">
+<script src="js/pwa.js" defer></script>
+<title>SkpQ - Customer Login</title>
+<link rel="stylesheet" href="css/tailwind.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Subtle background pattern */
+        .bg-pattern {
+            background-color: #f9f9ff;
+            background-image: radial-gradient(#00685f 0.5px, transparent 0.5px), radial-gradient(#00685f 0.5px, #f9f9ff 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            opacity: 0.03;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(188, 201, 198, 0.3);
+        }
+    </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/cart.js"></script>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col items-center justify-center relative">
+<!-- Background Decoration -->
+<div class="absolute inset-0 bg-pattern -z-10"></div>
+<div class="absolute -top-40 -right-40 w-96 h-96 bg-primary opacity-5 rounded-full blur-3xl"></div>
+<div class="absolute -bottom-40 -left-40 w-96 h-96 bg-secondary opacity-5 rounded-full blur-3xl"></div>
+<!-- TopAppBar Mapping -->
+<header class="flex justify-between items-center px-gutter w-full h-16 sticky top-0 z-50 bg-surface border-b border-outline-variant">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-primary-container transition-colors active:opacity-80 scale-95 duration-100" onclick="window.history.back()" title="Back to role selection">
+<span class="material-symbols-outlined text-primary" data-icon="arrow_back">arrow_back</span>
+</button>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-primary font-black">SkpQ</span>
+<div class="w-10"></div> <!-- Spacer for symmetry -->
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 w-full max-w-md mx-auto px-container-padding flex flex-col justify-center items-center gap-xl pb-24">
+<!-- Brand Illustration / Icon Section -->
+<div class="relative w-full flex justify-center mb-4">
+<div class="w-32 h-32 rounded-3xl bg-secondary-container flex items-center justify-center relative overflow-hidden shadow-lg rotate-3 hover:rotate-0 transition-transform duration-500">
+<span class="material-symbols-outlined text-primary text-6xl" data-icon="shopping_basket" style="font-variation-settings: 'FILL' 1;">shopping_basket</span>
+<div class="absolute bottom-2 right-2 w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-on-primary text-2xl" data-icon="qr_code_scanner">qr_code_scanner</span>
+</div>
+</div>
+</div>
+<!-- Typography Branding -->
+<div class="text-center space-y-sm">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Welcome back</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-[280px] mx-auto">
+                Sign in to access your cart, rewards, and speed through checkout.
+            </p>
+</div>
+<!-- Login Container (Glassmorphism) -->
+<div class="w-full glass-card p-lg rounded-[24px] shadow-sm space-y-lg">
+<!-- Google Sign-In Button -->
+<button class="w-full h-[56px] flex items-center justify-center gap-md bg-white border border-outline-variant rounded-xl hover:bg-surface-container-low transition-all active:scale-95 duration-200 shadow-sm" id="google-signin-btn">
+<svg height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+</svg>
+<span class="text-on-surface font-semibold text-[16px]">Continue with Google</span>
+</button>
+<div class="flex items-center gap-sm">
+<div class="flex-1 h-[1px] bg-outline-variant"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant px-sm uppercase tracking-widest">or</span>
+<div class="flex-1 h-[1px] bg-outline-variant"></div>
+</div>
+<!-- Email + password: Sign in / Create account -->
+<div class="space-y-sm" id="email-auth-block">
+<input class="w-full h-14 bg-white/50 border border-outline-variant rounded-xl px-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none font-body-md placeholder:text-on-surface-variant/50 hidden" id="name-input" placeholder="Full name" type="text" autocomplete="name"/>
+<input class="w-full h-14 bg-white/50 border border-outline-variant rounded-xl px-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none font-body-md placeholder:text-on-surface-variant/50" id="email-input" placeholder="Email address" type="email" autocomplete="email"/>
+<div class="relative">
+<input class="w-full h-14 bg-white/50 border border-outline-variant rounded-xl px-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none font-body-md placeholder:text-on-surface-variant/50" id="password-input" placeholder="Password" type="password" autocomplete="current-password" style="padding-right:64px"/>
+<button type="button" id="toggle-password" class="text-primary font-semibold text-sm" style="position:absolute;right:14px;top:50%;transform:translateY(-50%)">Show</button>
+</div>
+<input class="w-full h-14 bg-white/50 border border-outline-variant rounded-xl px-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none font-body-md placeholder:text-on-surface-variant/50 hidden" id="confirm-input" placeholder="Confirm password" type="password" autocomplete="new-password"/>
+<div class="flex justify-end" id="forgot-row">
+<button type="button" id="forgot-btn" class="text-primary font-semibold text-sm hover:underline">Forgot password?</button>
+</div>
+<button class="w-full h-14 bg-primary text-on-primary rounded-xl font-semibold shadow-md hover:bg-primary-container transition-all active:scale-95" id="email-continue-btn" type="button">Sign in</button>
+<p class="text-center text-sm hidden" id="email-status"></p>
+<p class="text-center text-sm text-on-surface-variant">
+<span id="mode-prompt">New to SkpQ?</span>
+<button type="button" id="mode-toggle" class="text-primary font-semibold hover:underline">Create account</button>
+</p>
+</div>
+<p class="text-center font-label-sm text-label-sm text-on-surface-variant">
+                By continuing, you agree to SkpQ's <a class="text-primary hover:underline" href="#">Terms</a> and <a class="text-primary hover:underline" href="#">Privacy Policy</a>.
+            </p>
+</div>
+<!-- Featured Merchant / Contextual UI -->
+<div class="w-full mt-lg">
+<div class="flex items-center justify-between mb-sm">
+<h3 class="font-label-md text-label-md text-on-surface-variant">Nearby Express Checkout</h3>
+</div>
+<div class="grid grid-cols-2 gap-sm">
+<div class="flex items-center gap-sm bg-white p-sm rounded-xl border border-outline-variant shadow-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="storefront">storefront</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface font-bold">City Market</span>
+</div>
+<div class="flex items-center gap-sm bg-white p-sm rounded-xl border border-outline-variant shadow-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="local_mall">local_mall</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface font-bold">Tech Depot</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Visual Floating Element (Micro-interaction anchor) -->
+<div class="fixed top-0 left-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none -translate-x-1/2 -translate-y-1/2 transition-opacity opacity-0 z-0" id="cursor-glow"></div>
+<script>
+        // Micro-interaction for subtle glow following mouse on desktop
+        const glow = document.getElementById('cursor-glow');
+        window.addEventListener('mousemove', (e) => {
+            glow.style.opacity = '1';
+            glow.style.left = e.clientX + 'px';
+            glow.style.top = e.clientY + 'px';
+        });
+
+        // Simple button active state visual feedback
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'scale(0.96)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+<script>
+    // Redirect if already signed in
+    let signupInProgress = false; // true while a new account is saving its name
+    auth.onAuthStateChanged(user => {
+        if (user && !signupInProgress) window.location.href = 'dashboard.html';
+    });
+
+    // Finish a redirect-based sign-in if we just came back from Google
+    auth.getRedirectResult().then(result => {
+        if (result.user) window.location.href = 'dashboard.html';
+    }).catch(err => {
+        console.error('Redirect sign-in failed:', err);
+        if (err.code !== 'auth/no-current-user') {
+            alert('Sign-in failed: ' + err.message);
+        }
+    });
+
+    document.getElementById('google-signin-btn').addEventListener('click', async () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        try {
+            await auth.signInWithPopup(provider);
+            window.location.href = 'dashboard.html';
+        } catch (err) {
+            console.error(err);
+            if (err.code === 'auth/operation-not-supported-in-this-environment'
+                || err.code === 'auth/popup-blocked'
+                || err.code === 'auth/popup-closed-by-user') {
+                // Only fall back to redirect if popup genuinely can't run here
+                if (err.code !== 'auth/popup-closed-by-user') {
+                    auth.signInWithRedirect(provider);
+                }
+            } else {
+                alert('Sign-in failed: ' + err.message);
+            }
+        }
+    });
+</script>
+<script>
+    // ---------------------------------------------------------
+    // Email + password: Sign in, Create account, Forgot password
+    // ---------------------------------------------------------
+    let mode = 'signin'; // 'signin' or 'signup'
+    const nameInput = document.getElementById('name-input');
+    const emailInput = document.getElementById('email-input');
+    const passInput = document.getElementById('password-input');
+    const confirmInput = document.getElementById('confirm-input');
+    const submitBtn = document.getElementById('email-continue-btn');
+    const statusEl = document.getElementById('email-status');
+
+    function showStatus(msg, isError) {
+        statusEl.textContent = msg;
+        statusEl.classList.remove('hidden', 'text-error', 'text-primary');
+        statusEl.classList.add(isError ? 'text-error' : 'text-primary');
+    }
+    function clearStatus() { statusEl.classList.add('hidden'); statusEl.textContent = ''; }
+
+    function setMode(m) {
+        mode = m;
+        const signup = m === 'signup';
+        nameInput.classList.toggle('hidden', !signup);
+        confirmInput.classList.toggle('hidden', !signup);
+        document.getElementById('forgot-row').classList.toggle('hidden', signup);
+        submitBtn.textContent = signup ? 'Create account' : 'Sign in';
+        document.getElementById('mode-prompt').textContent = signup ? 'Already have an account?' : 'New to SkpQ?';
+        document.getElementById('mode-toggle').textContent = signup ? 'Sign in' : 'Create account';
+        passInput.setAttribute('autocomplete', signup ? 'new-password' : 'current-password');
+        clearStatus();
+    }
+    document.getElementById('mode-toggle').addEventListener('click', () => setMode(mode === 'signin' ? 'signup' : 'signin'));
+
+    document.getElementById('toggle-password').addEventListener('click', (e) => {
+        const show = passInput.type === 'password';
+        passInput.type = show ? 'text' : 'password';
+        confirmInput.type = show ? 'text' : 'password';
+        e.target.textContent = show ? 'Hide' : 'Show';
+    });
+
+    function friendlyError(err) {
+        switch (err.code) {
+            case 'auth/invalid-credential':
+            case 'auth/wrong-password':
+            case 'auth/user-not-found':
+                return 'Wrong email or password. New here? Tap "Create account". If you signed up with Google, use Continue with Google.';
+            case 'auth/email-already-in-use':
+                return 'That email already has an account. Tap "Sign in" instead (or use Continue with Google if you signed up with Google).';
+            case 'auth/weak-password':
+                return 'Password is too weak. Use at least 6 characters.';
+            case 'auth/invalid-email':
+                return 'That email address does not look right.';
+            case 'auth/too-many-requests':
+                return 'Too many tries. Please wait a few minutes and try again.';
+            case 'auth/network-request-failed':
+                return 'No internet connection. Please check your network and try again.';
+            case 'auth/operation-not-allowed':
+                return 'Email/Password sign-in is not switched on in Firebase (Authentication > Sign-in method).';
+            default:
+                return 'Something went wrong: ' + err.message;
+        }
+    }
+
+    async function submitEmailAuth() {
+        const email = emailInput.value.trim();
+        const password = passInput.value;
+        if (!/^\S+@\S+\.\S+$/.test(email)) { showStatus('Please enter a valid email address.', true); return; }
+        if (!password) { showStatus('Please enter your password.', true); return; }
+
+        if (mode === 'signup') {
+            const name = nameInput.value.trim();
+            if (!name) { showStatus('Please enter your full name.', true); return; }
+            if (password.length < 6) { showStatus('Password must be at least 6 characters.', true); return; }
+            if (password !== confirmInput.value) { showStatus('The two passwords do not match.', true); return; }
+        }
+
+        submitBtn.disabled = true;
+        const label = submitBtn.textContent;
+        submitBtn.textContent = mode === 'signup' ? 'Creating account...' : 'Signing in...';
+        clearStatus();
+
+        try {
+            if (mode === 'signup') {
+                signupInProgress = true; // stop the auto-redirect until the name is saved
+                const cred = await auth.createUserWithEmailAndPassword(email, password);
+                const name = nameInput.value.trim();
+                await cred.user.updateProfile({ displayName: name });
+                try {
+                    await db.collection('users').doc(cred.user.uid).set({ name: name, email: email }, { merge: true });
+                } catch (e) { console.warn('Could not save profile doc yet:', e); }
+                window.location.href = 'dashboard.html';
+            } else {
+                await auth.signInWithEmailAndPassword(email, password);
+                window.location.href = 'dashboard.html';
+            }
+        } catch (err) {
+            signupInProgress = false;
+            console.error(err);
+            showStatus(friendlyError(err), true);
+            submitBtn.disabled = false;
+            submitBtn.textContent = label;
+        }
+    }
+
+    submitBtn.addEventListener('click', submitEmailAuth);
+    [emailInput, passInput, confirmInput, nameInput].forEach(el =>
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitEmailAuth(); } })
+    );
+
+    document.getElementById('forgot-btn').addEventListener('click', async () => {
+        const email = emailInput.value.trim();
+        if (!/^\S+@\S+\.\S+$/.test(email)) { showStatus('Type your email above first, then tap "Forgot password?".', true); return; }
+        try {
+            await auth.sendPasswordResetEmail(email);
+            showStatus('If an account exists for ' + email + ', a password reset link has been sent. Check your inbox and spam folder.', false);
+        } catch (err) {
+            console.error(err);
+            showStatus(friendlyError(err), true);
+        }
+    });
+</script>
+</body></html>
