@@ -36,7 +36,37 @@
             background: #bcc9c6;
             border-radius: 10px;
         }
-    </style>
+          /* Decathlon-style form look */
+        main input, main select, #email-display {
+            border-radius: 0 !important;
+            background: #ffffff !important;
+            border: 1px solid #8c8c8c !important;
+            height: 52px;
+        }
+        main input:focus, main select:focus {
+            border-color: #00685f !important;
+            box-shadow: 0 0 0 1px #00685f;
+        }
+        #email-display {
+            background: #f3f3f3 !important;
+        }
+        main label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #111111;
+        }
+        #save-btn, #change-password-btn {
+            border-radius: 0 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 700;
+            box-shadow: none !important;
+        }
+        header h1 {
+            font-size: 22px;
+            font-weight: 800;
+        }  
+</style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
