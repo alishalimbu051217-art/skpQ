@@ -165,6 +165,9 @@
         });
 
         // Simple haptic-like feedback on submit
+        // Put your staff login email(s) here, in lowercase, e.g. ['staff@skpq.com']
+        const STAFF_EMAILS = [];
+
         const form = document.querySelector('form');
 
         document.getElementById('forgot-password-link').addEventListener('click', async (e) => {
@@ -195,6 +198,11 @@
 
             try {
                 await auth.signInWithEmailAndPassword(email, password);
+                // Only allow listed staff emails (leave STAFF_EMAILS empty to allow any account)
+                if (STAFF_EMAILS.length && !STAFF_EMAILS.includes(email.toLowerCase())) {
+                    await auth.signOut();
+                    throw new Error('This account is not a staff account.');
+                }
                 // Mark this browser session as an employee session
                 localStorage.setItem('skpq_role', 'employee');
                 window.location.href = 'employee-home.html';

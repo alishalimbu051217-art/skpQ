@@ -95,14 +95,24 @@
 <span class="font-label-sm text-label-sm text-on-surface-variant px-sm uppercase tracking-widest">or</span>
 <div class="flex-1 h-[1px] bg-outline-variant"></div>
 </div>
-<!-- Email (Visual Placeholder as per Refined Minimalism) -->
-<div class="space-y-sm">
+<!-- Email + password: Sign in / Create account -->
+<div class="space-y-sm" id="email-auth-block">
+<input class="w-full h-14 bg-white/50 border border-outline-variant rounded-xl px-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none font-body-md placeholder:text-on-surface-variant/50 hidden" id="name-input" placeholder="Full name" type="text" autocomplete="name"/>
+<input class="w-full h-14 bg-white/50 border border-outline-variant rounded-xl px-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none font-body-md placeholder:text-on-surface-variant/50" id="email-input" placeholder="Email address" type="email" autocomplete="email"/>
 <div class="relative">
-<input class="w-full h-14 bg-white/50 border border-outline-variant rounded-xl px-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none font-body-md placeholder:text-on-surface-variant/50" placeholder="Email address" type="email"/>
+<input class="w-full h-14 bg-white/50 border border-outline-variant rounded-xl px-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none font-body-md placeholder:text-on-surface-variant/50" id="password-input" placeholder="Password" type="password" autocomplete="current-password" style="padding-right:64px"/>
+<button type="button" id="toggle-password" class="text-primary font-semibold text-sm" style="position:absolute;right:14px;top:50%;transform:translateY(-50%)">Show</button>
 </div>
-<button class="w-full h-14 bg-primary text-on-primary rounded-xl font-semibold shadow-md hover:bg-primary-container transition-all active:scale-95">
-                    Continue
-                </button>
+<input class="w-full h-14 bg-white/50 border border-outline-variant rounded-xl px-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none font-body-md placeholder:text-on-surface-variant/50 hidden" id="confirm-input" placeholder="Confirm password" type="password" autocomplete="new-password"/>
+<div class="flex justify-end" id="forgot-row">
+<button type="button" id="forgot-btn" class="text-primary font-semibold text-sm hover:underline">Forgot password?</button>
+</div>
+<button class="w-full h-14 bg-primary text-on-primary rounded-xl font-semibold shadow-md hover:bg-primary-container transition-all active:scale-95" id="email-continue-btn" type="button">Sign in</button>
+<p class="text-center text-sm hidden" id="email-status"></p>
+<p class="text-center text-sm text-on-surface-variant">
+<span id="mode-prompt">New to SkpQ?</span>
+<button type="button" id="mode-toggle" class="text-primary font-semibold hover:underline">Create account</button>
+</p>
 </div>
 <p class="text-center font-label-sm text-label-sm text-on-surface-variant">
                 By continuing, you agree to SkpQ's <a class="text-primary hover:underline" href="#">Terms</a> and <a class="text-primary hover:underline" href="#">Privacy Policy</a>.
@@ -152,8 +162,9 @@
     </script>
 <script>
     // Redirect if already signed in
+    let signupInProgress = false; // true while a new account is saving its name
     auth.onAuthStateChanged(user => {
-        if (user) window.location.href = 'dashboard.html';
+        if (user && !signupInProgress) window.location.href = 'dashboard.html';
     });
 
     // Finish a redirect-based sign-in if we just came back from Google
@@ -184,6 +195,127 @@
             } else {
                 alert('Sign-in failed: ' + err.message);
             }
+        }
+    });
+</script>
+<script>
+    // ---------------------------------------------------------
+    // Email + password: Sign in, Create account, Forgot password
+    // ---------------------------------------------------------
+    let mode = 'signin'; // 'signin' or 'signup'
+    const nameInput = document.getElementById('name-input');
+    const emailInput = document.getElementById('email-input');
+    const passInput = document.getElementById('password-input');
+    const confirmInput = document.getElementById('confirm-input');
+    const submitBtn = document.getElementById('email-continue-btn');
+    const statusEl = document.getElementById('email-status');
+
+    function showStatus(msg, isError) {
+        statusEl.textContent = msg;
+        statusEl.classList.remove('hidden', 'text-error', 'text-primary');
+        statusEl.classList.add(isError ? 'text-error' : 'text-primary');
+    }
+    function clearStatus() { statusEl.classList.add('hidden'); statusEl.textContent = ''; }
+
+    function setMode(m) {
+        mode = m;
+        const signup = m === 'signup';
+        nameInput.classList.toggle('hidden', !signup);
+        confirmInput.classList.toggle('hidden', !signup);
+        document.getElementById('forgot-row').classList.toggle('hidden', signup);
+        submitBtn.textContent = signup ? 'Create account' : 'Sign in';
+        document.getElementById('mode-prompt').textContent = signup ? 'Already have an account?' : 'New to SkpQ?';
+        document.getElementById('mode-toggle').textContent = signup ? 'Sign in' : 'Create account';
+        passInput.setAttribute('autocomplete', signup ? 'new-password' : 'current-password');
+        clearStatus();
+    }
+    document.getElementById('mode-toggle').addEventListener('click', () => setMode(mode === 'signin' ? 'signup' : 'signin'));
+
+    document.getElementById('toggle-password').addEventListener('click', (e) => {
+        const show = passInput.type === 'password';
+        passInput.type = show ? 'text' : 'password';
+        confirmInput.type = show ? 'text' : 'password';
+        e.target.textContent = show ? 'Hide' : 'Show';
+    });
+
+    function friendlyError(err) {
+        switch (err.code) {
+            case 'auth/invalid-credential':
+            case 'auth/wrong-password':
+            case 'auth/user-not-found':
+                return 'Wrong email or password. New here? Tap "Create account". If you signed up with Google, use Continue with Google.';
+            case 'auth/email-already-in-use':
+                return 'That email already has an account. Tap "Sign in" instead (or use Continue with Google if you signed up with Google).';
+            case 'auth/weak-password':
+                return 'Password is too weak. Use at least 6 characters.';
+            case 'auth/invalid-email':
+                return 'That email address does not look right.';
+            case 'auth/too-many-requests':
+                return 'Too many tries. Please wait a few minutes and try again.';
+            case 'auth/network-request-failed':
+                return 'No internet connection. Please check your network and try again.';
+            case 'auth/operation-not-allowed':
+                return 'Email/Password sign-in is not switched on in Firebase (Authentication > Sign-in method).';
+            default:
+                return 'Something went wrong: ' + err.message;
+        }
+    }
+
+    async function submitEmailAuth() {
+        const email = emailInput.value.trim();
+        const password = passInput.value;
+        if (!/^\S+@\S+\.\S+$/.test(email)) { showStatus('Please enter a valid email address.', true); return; }
+        if (!password) { showStatus('Please enter your password.', true); return; }
+
+        if (mode === 'signup') {
+            const name = nameInput.value.trim();
+            if (!name) { showStatus('Please enter your full name.', true); return; }
+            if (password.length < 6) { showStatus('Password must be at least 6 characters.', true); return; }
+            if (password !== confirmInput.value) { showStatus('The two passwords do not match.', true); return; }
+        }
+
+        submitBtn.disabled = true;
+        const label = submitBtn.textContent;
+        submitBtn.textContent = mode === 'signup' ? 'Creating account...' : 'Signing in...';
+        clearStatus();
+
+        try {
+            if (mode === 'signup') {
+                signupInProgress = true; // stop the auto-redirect until the name is saved
+                const cred = await auth.createUserWithEmailAndPassword(email, password);
+                const name = nameInput.value.trim();
+                await cred.user.updateProfile({ displayName: name });
+                try {
+                    await db.collection('users').doc(cred.user.uid).set({ name: name, email: email }, { merge: true });
+                } catch (e) { console.warn('Could not save profile doc yet:', e); }
+                window.location.href = 'dashboard.html';
+            } else {
+                await auth.signInWithEmailAndPassword(email, password);
+                window.location.href = 'dashboard.html';
+            }
+        } catch (err) {
+            signupInProgress = false;
+            console.error(err);
+            showStatus(friendlyError(err), true);
+            submitBtn.disabled = false;
+            submitBtn.textContent = label;
+        }
+    }
+
+    submitBtn.addEventListener('click', submitEmailAuth);
+    [emailInput, passInput, confirmInput, nameInput].forEach(el =>
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitEmailAuth(); } })
+    );
+
+    document.getElementById('forgot-btn').addEventListener('click', async () => {
+        const email = emailInput.value.trim();
+        if (!/^\S+@\S+\.\S+$/.test(email)) { showStatus('Type your email above first, then tap "Forgot password?".', true); return; }
+        try {
+            await auth.sendPasswordResetEmail(email);
+            showStatus('If an account exists for ' + email + ', a password reset link has been sent. Check your inbox and spam folder.', false);
+        } catch (err) {
+            console.error(err);
+            showStatus(friendlyError(err), true);
         }
     });
 </script>
