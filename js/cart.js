@@ -25,7 +25,7 @@ const Cart = {
     return items;
   },
 
-    removeItem(code) {
+  removeItem(code) {
     let items = this.get();
     const item = items.find(i => i.code === code);
     if (item && item.qty > 1) {
@@ -35,7 +35,6 @@ const Cart = {
     }
     this.save(items);
     return items;
-  },
   },
 
   total() {
@@ -55,7 +54,7 @@ const Cart = {
 // ---------------------------------------------------------
 const Theme = {
   init() {
-   const saved = localStorage.getItem("theme") || 'light';
+    const saved = localStorage.getItem("theme") || 'light';
     document.documentElement.classList.toggle("dark", saved === "dark");
   },
   toggle() {
@@ -64,4 +63,5 @@ const Theme = {
     return isDark;
   }
 };
+
 Theme.init();
