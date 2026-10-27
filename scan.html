@@ -72,6 +72,34 @@ padding: 0 22px; font-weight: 700; font-size: 15px; cursor: pointer;
 .mq-manual-msg.error { color: #ba1a1a; }
 .mq-manual-msg.ok { color: #00685f; font-weight: 600; }
 
+/* ---- Camera permission screen ---- */
+.mq-perm {
+position: absolute; inset: 0; z-index: 28;
+display: flex; align-items: center; justify-content: center;
+padding: 24px 24px 150px; background: rgba(10, 20, 19, 0.88);
+}
+.mq-perm[hidden] { display: none; }
+.mq-perm-card {
+background: #fff; border-radius: 24px; padding: 28px 24px 22px;
+max-width: 380px; width: 100%; text-align: center;
+box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+}
+.mq-perm-icon {
+width: 72px; height: 72px; border-radius: 50%; background: #e0f2ef;
+margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;
+}
+.mq-perm-icon span { font-size: 36px; color: #00685f; }
+.mq-perm-card h2 { margin: 0 0 8px; font-size: 20px; font-weight: 800; color: #191c1c; }
+.mq-perm-card p { margin: 0 0 18px; font-size: 14px; line-height: 1.5; color: #3d4947; }
+.mq-perm-primary {
+width: 100%; background: #00685f; color: #fff; border: none; border-radius: 14px;
+padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer;
+}
+.mq-perm-secondary {
+width: 100%; background: transparent; color: #00685f; border: none;
+padding: 12px 0 0; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+
 /* ---- Camera problem message ---- */
 .mq-camera-status {
 position: absolute; left: 16px; right: 16px; top: 96px; z-index: 25;
@@ -137,6 +165,17 @@ border-radius: 12px; padding: 8px 16px; font-weight: 700; font-size: 13px; curso
 <div class="mq-camera-status" id="camera-status" hidden>
 <p id="camera-status-text"></p>
 <button id="camera-retry" type="button">Try camera again</button>
+</div>
+
+<!-- Camera permission screen -->
+<div class="mq-perm" id="perm-screen" hidden>
+<div class="mq-perm-card">
+<div class="mq-perm-icon"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">photo_camera</span></div>
+<h2 id="perm-title">Allow camera access</h2>
+<p id="perm-text">SkpQ uses your camera only to read product barcodes while you shop. Nothing is recorded or uploaded.</p>
+<button class="mq-perm-primary" id="perm-allow" type="button">Allow camera</button>
+<button class="mq-perm-secondary" id="perm-skip" type="button">I'll type barcodes instead</button>
+</div>
 </div>
 
 <!-- Scanned Item Confirmation Popup (now shown near the top so it never covers the manual entry box) -->
@@ -399,116 +438,268 @@ e.target.value = e.target.value.replace(/\D/g, '');
 });
 
 // ---------------------------------------------------------
-// Quagga2 barcode scanning
+// Camera + barcode scanning
+// We open the camera ourselves (so we can ask permission clearly
+// and show real error messages), then read barcodes from the
+// video. Chrome's built-in BarcodeDetector is used when the
+// browser has it; otherwise Quagga2 reads the picture instead.
 // ---------------------------------------------------------
-let scanLocked = false; // global cooldown — prevents one physical
-// barcode from being added as multiple items
-// once it's been successfully read
-// Quagga fires onDetected on EVERY camera frame, and any single frame
-// can misread a barcode (blur, glare, bad angle) — especially the
-// first frame or two before the camera settles. Instead of trusting
-// the very first read, we require the SAME code to come up several
-// times in a short window before accepting it as real. This is what
-// was causing "unrecognized item" / wrong weight on early attempts.
-const CONSENSUS_COUNT = 3; // reads needed before accepting a code
-const CONSENSUS_WINDOW_MS = 1200; // how recent those reads must be
+let scanLocked = false; // global cooldown — stops one physical barcode
+// from being added as multiple items
+const CONSENSUS_WINDOW_MS = 2000; // how recent matching reads must be
 let recentReads = []; // { code, time }
-let detectorBound = false; // makes sure we only listen for scans once
+
+let cameraStream = null;
+let videoEl = null;
+let scanTimer = null;
+let decoding = false;
+let barcodeDetector = null;
+let detectorReady = false;
+const scanCanvas = document.createElement('canvas');
 
 function showCameraProblem(message) {
 document.getElementById('camera-status-text').textContent = message + ' You can still add items with the box at the bottom.';
 document.getElementById('camera-status').hidden = false;
+document.getElementById('perm-screen').hidden = true;
 document.getElementById('camera-fallback').style.display = '';
+}
+
+function showPermissionScreen(mode) {
+const title = document.getElementById('perm-title');
+const text = document.getElementById('perm-text');
+const allow = document.getElementById('perm-allow');
+document.getElementById('camera-status').hidden = true;
+if (mode === 'blocked') {
+title.textContent = 'Camera is blocked';
+text.textContent = 'SkpQ needs your camera to scan barcodes. Tap the lock icon next to the web address (or open your browser\'s site settings), set Camera to Allow, then tap Try again.';
+allow.textContent = 'Try again';
+} else {
+title.textContent = 'Allow camera access';
+text.textContent = 'SkpQ uses your camera only to read product barcodes while you shop. Nothing is recorded or uploaded.';
+allow.textContent = 'Allow camera';
+}
+document.getElementById('perm-screen').hidden = false;
 }
 
 function explainCameraError(err) {
 const name = (err && (err.name || err.message)) || '';
-if (/NotAllowed|Permission/i.test(name)) {
-return 'Camera access is blocked. Click the lock icon next to the web address, set Camera to Allow, then tap "Try camera again".';
-}
-if (/NotFound|DevicesNotFound/i.test(name)) {
-return 'No camera was found on this device.';
-}
-if (/NotReadable|TrackStart/i.test(name)) {
-return 'The camera is being used by another app or tab. Close it, then tap "Try camera again".';
-}
+if (/NotFound|DevicesNotFound/i.test(name)) return 'No camera was found on this device.';
+if (/NotReadable|TrackStart/i.test(name)) return 'The camera is being used by another app or tab. Close it, then tap "Try camera again".';
+if (/Timeout/i.test(name)) return 'The camera did not respond. Check that camera permission is allowed for this site, then tap "Try camera again".';
 return `The camera could not start (${name || 'unknown error'}).`;
 }
 
-async function onBarcodeDetected(result) {
-if (scanLocked) return;
-const code = result.codeResult.code;
-const now = Date.now();
-// Drop stale reads, then log this one
-recentReads = recentReads.filter(r => now - r.time < CONSENSUS_WINDOW_MS);
-recentReads.push({ code, time: now });
-// Not enough agreement yet — wait for more frames
-const matches = recentReads.filter(r => r.code === code).length;
-if (matches < CONSENSUS_COUNT) return;
-// We have consensus — this read is trustworthy. Lock and commit.
-scanLocked = true;
-recentReads = [];
-const product = await lookupProduct(code);
-addProductToCart(code, product);
-// Require a fresh, deliberate hold-up-the-item moment before
-// the next scan is accepted — this is what stops one barcode
-// from flooding in as 5-9 items.
-setTimeout(() => { scanLocked = false; }, 2000);
+function isInAppBrowser() {
+return /FBAN|FBAV|Instagram|WhatsApp|Line\/|Snapchat|; wv\)/i.test(navigator.userAgent);
 }
 
-function startScanner(simpleConstraints) {
-document.getElementById('camera-status').hidden = true;
-
-if (typeof Quagga === 'undefined') {
-console.warn('Quagga2 not loaded — check your internet connection / CDN.');
-showCameraProblem('The scanner could not load. Check your internet connection and reload the page.');
-return;
+async function getCameraPermissionState() {
+try {
+if (!navigator.permissions || !navigator.permissions.query) return null;
+const status = await navigator.permissions.query({ name: 'camera' });
+return status.state; // 'granted' | 'denied' | 'prompt'
+} catch (e) {
+return null; // some browsers (e.g. Safari) don't support this check
+}
 }
 
-const constraints = simpleConstraints
-? {}
-: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } };
-
-Quagga.init({
-inputStream: {
-type: "LiveStream",
-target: document.querySelector('#scanner-viewport'),
-constraints: constraints,
-// Only look for barcodes in the middle of the picture (where the frame is)
-area: { top: "20%", right: "10%", left: "10%", bottom: "20%" }
-},
-locator: { patchSize: "medium", halfSample: true },
-numOfWorkers: Math.min(navigator.hardwareConcurrency || 2, 4),
-frequency: 10,
-decoder: {
-readers: ["ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_128_reader"]
-},
-locate: true
-}, err => {
-if (err) {
-console.error('Quagga init failed:', err);
-// If the camera didn't like our requested settings, retry once with plain settings
-if (!simpleConstraints && /Overconstrained|Constraint/i.test((err && (err.name || err.message)) || '')) {
-startScanner(true);
-return;
+// Ask the browser for the camera. Gives up after 15 seconds so we never hang silently.
+function openCameraStream() {
+const ask = async () => {
+try {
+return await navigator.mediaDevices.getUserMedia({
+video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+audio: false
+});
+} catch (e) {
+if (/Overconstrained|Constraint/i.test((e && e.name) || '')) {
+return await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
 }
-showCameraProblem(explainCameraError(err));
-return;
+throw e;
 }
-document.getElementById('camera-fallback').style.display = 'none';
-if (!detectorBound) {
-Quagga.onDetected(onBarcodeDetected);
-detectorBound = true;
-}
-Quagga.start();
+};
+return new Promise((resolve, reject) => {
+let timedOut = false;
+const timer = setTimeout(() => {
+timedOut = true;
+const err = new Error('Camera request timed out');
+err.name = 'TimeoutError';
+reject(err);
+}, 15000);
+ask().then(stream => {
+clearTimeout(timer);
+if (timedOut) { stream.getTracks().forEach(t => t.stop()); return; } // answered too late
+resolve(stream);
+}).catch(err => {
+clearTimeout(timer);
+if (!timedOut) reject(err);
+});
 });
 }
 
-document.getElementById('camera-retry').addEventListener('click', () => startScanner());
+function stopCamera() {
+clearInterval(scanTimer);
+scanTimer = null;
+if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+cameraStream = null;
+}
+
+async function initDetector() {
+if (detectorReady) return;
+detectorReady = true;
+try {
+if (!('BarcodeDetector' in window)) return;
+const supported = await BarcodeDetector.getSupportedFormats();
+const wanted = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'].filter(f => supported.includes(f));
+if (wanted.length) barcodeDetector = new BarcodeDetector({ formats: wanted });
+} catch (e) {
+barcodeDetector = null;
+}
+}
+
+async function startCamera() {
+document.getElementById('camera-status').hidden = true;
+document.getElementById('perm-screen').hidden = true;
+
+if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+showCameraProblem('This browser does not allow camera access. Please open the site in Chrome or Safari.');
+return;
+}
+
+stopCamera();
+let stream;
+try {
+stream = await openCameraStream();
+} catch (err) {
+console.error('Camera failed:', err);
+if (/NotAllowed|Permission|Security/i.test((err && err.name) || '')) {
+showPermissionScreen('blocked');
+} else {
+showCameraProblem(explainCameraError(err));
+}
+return;
+}
+
+cameraStream = stream;
+const viewport = document.getElementById('scanner-viewport');
+viewport.innerHTML = '';
+videoEl = document.createElement('video');
+videoEl.setAttribute('playsinline', '');
+videoEl.setAttribute('autoplay', '');
+videoEl.muted = true;
+videoEl.style.width = '100%';
+videoEl.style.height = '100%';
+videoEl.style.objectFit = 'cover';
+videoEl.srcObject = stream;
+viewport.appendChild(videoEl);
+
+try {
+await videoEl.play();
+} catch (err) {
+console.error('Video could not play:', err);
+showCameraProblem('The camera opened but the video could not start.');
+return;
+}
+
+document.getElementById('camera-fallback').style.display = 'none';
+await initDetector();
+clearInterval(scanTimer);
+scanTimer = setInterval(scanFrame, 200);
+}
+
+// Take the middle part of the picture (where the frame is) and look for a barcode
+async function scanFrame() {
+if (decoding || scanLocked || !videoEl || !videoEl.videoWidth) return;
+decoding = true;
+try {
+const vw = videoEl.videoWidth, vh = videoEl.videoHeight;
+const sw = vw * 0.8, sh = vh * 0.5;
+const sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+scanCanvas.width = Math.min(Math.round(sw), 960);
+scanCanvas.height = Math.round(sh * (scanCanvas.width / sw));
+scanCanvas.getContext('2d').drawImage(videoEl, sx, sy, sw, sh, 0, 0, scanCanvas.width, scanCanvas.height);
+
+let code = null;
+if (barcodeDetector) {
+try {
+const found = await barcodeDetector.detect(scanCanvas);
+if (found.length) code = found[0].rawValue;
+} catch (e) {
+barcodeDetector = null; // fall back to Quagga from the next frame
+}
+} else {
+code = await quaggaDecode(scanCanvas);
+}
+if (code) await handleRead(code);
+} finally {
+decoding = false;
+}
+}
+
+function quaggaDecode(canvas) {
+return new Promise(resolve => {
+if (typeof Quagga === 'undefined') { resolve(null); return; }
+try {
+Quagga.decodeSingle({
+src: canvas.toDataURL('image/jpeg', 0.85),
+numOfWorkers: 0,
+inputStream: { size: canvas.width },
+locator: { patchSize: 'medium', halfSample: false },
+decoder: { readers: ["ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_128_reader"] },
+locate: true
+}, result => {
+resolve(result && result.codeResult ? result.codeResult.code : null);
+});
+} catch (e) {
+resolve(null);
+}
+});
+}
+
+// A single bad frame can misread a barcode, so the same code must be
+// seen more than once in a short time before it is trusted.
+async function handleRead(code) {
+const now = Date.now();
+recentReads = recentReads.filter(r => now - r.time < CONSENSUS_WINDOW_MS);
+recentReads.push({ code, time: now });
+const needed = barcodeDetector ? 2 : 3;
+if (recentReads.filter(r => r.code === code).length < needed) return;
+
+scanLocked = true;
+recentReads = [];
+try {
+const found = await findProductForManualCode(code); // also tries the 12/13-digit variants
+if (found) addProductToCart(found.code, found.product);
+else addProductToCart(code, await lookupProduct(code));
+} finally {
+// Require a fresh, deliberate hold-up-the-item moment before the next scan
+setTimeout(() => { scanLocked = false; }, 2000);
+}
+}
+
+// ---------- Buttons and first-time flow ----------
+document.getElementById('perm-allow').addEventListener('click', () => startCamera());
+document.getElementById('perm-skip').addEventListener('click', () => {
+document.getElementById('perm-screen').hidden = true;
+showCameraProblem('The camera is off.');
+});
+document.getElementById('camera-retry').addEventListener('click', () => startCamera());
+window.addEventListener('pagehide', stopCamera);
+
+async function initCamera() {
+if (isInAppBrowser()) {
+showCameraProblem('This looks like an in-app browser (WhatsApp, Instagram, etc.), which often blocks the camera. Open skpq.onrender.com in Chrome or Safari.');
+return;
+}
+const state = await getCameraPermissionState();
+if (state === 'granted') startCamera(); // already allowed: just start
+else if (state === 'denied') showPermissionScreen('blocked');
+else showPermissionScreen('ask'); // new user: explain first, then ask
+}
 
 window.addEventListener('DOMContentLoaded', () => {
 renderCart();
-startScanner();
+initCamera();
 });
 </script>
 </body></html>
