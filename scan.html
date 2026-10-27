@@ -93,6 +93,12 @@ padding: 0 22px; font-weight: 700; font-size: 15px; cursor: pointer;
 .mq-manual-msg.error { color: #ba1a1a; }
 .mq-manual-msg.ok { color: #00685f; font-weight: 600; }
 
+/* ---- Quantity stepper ---- */
+.mq-step { display: inline-flex; align-items: center; gap: 2px; margin-top: 6px; background: rgba(0, 104, 95, 0.12); border-radius: 999px; padding: 2px; }
+.mq-step button { width: 32px; height: 32px; border: none; border-radius: 50%; background: #fff; color: #00685f; font-size: 20px; font-weight: 700; line-height: 1; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
+.mq-step button:active { transform: scale(0.9); }
+.mq-step span { min-width: 34px; text-align: center; font-weight: 700; font-size: 15px; color: inherit; }
+
 /* ---- Camera state line ---- */
 .mq-state {
 position: absolute; top: 78px; left: 0; right: 0; z-index: 20; text-align: center;
@@ -369,7 +375,12 @@ listEl.innerHTML = items.map(i => `
 <div class="flex items-center gap-md p-md bg-surface-container-lowest rounded-2xl border border-outline-variant/30">
 <div class="flex-1">
 <p class="font-label-md text-on-surface">${i.name}</p>
-<p class="text-xs text-on-surface-variant">Qty: ${i.qty} • ${formatWeight(i.weightGrams)} each</p>
+<p class="text-xs text-on-surface-variant">₹${i.price.toFixed(2)} each • ${formatWeight(i.weightGrams)} each</p>
+<div class="mq-step">
+<button type="button" onclick="changeScannedQty('${i.code}', -1)" aria-label="Decrease quantity of ${i.name}">−</button>
+<span>${i.qty}</span>
+<button type="button" onclick="changeScannedQty('${i.code}', 1)" aria-label="Increase quantity of ${i.name}">+</button>
+</div>
 </div>
 <span class="font-bold text-on-surface">₹${(i.price * i.qty).toFixed(2)}</span>
 <button class="w-9 h-9 flex items-center justify-center rounded-full text-error hover:bg-error/10 transition-colors" onclick="removeScannedItem('${i.code}')" aria-label="Remove ${i.name}">
@@ -379,7 +390,13 @@ listEl.innerHTML = items.map(i => `
 `).join('');
 }
 function removeScannedItem(code) {
-Cart.removeItem(code);
+Cart.deleteItem(code); // trash button removes the whole line
+renderCart();
+if (window.navigator.vibrate) window.navigator.vibrate(10);
+}
+
+function changeScannedQty(code, delta) {
+Cart.changeQty(code, delta);
 renderCart();
 if (window.navigator.vibrate) window.navigator.vibrate(10);
 }
