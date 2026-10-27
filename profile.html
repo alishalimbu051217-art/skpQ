@@ -208,7 +208,7 @@
         try {
             const doc = await db.collection('users').doc(user.uid).get();
             const data = doc.exists ? doc.data() : {};
-            setAvatarDisplay(data.photoURL || null);
+                        setAvatarDisplay(data.photo || data.photoURL || null);
         } catch (err) {
             console.error('Could not load profile doc:', err);
             setAvatarDisplay(null);
@@ -240,8 +240,7 @@
 
                 setAvatarDisplay(dataUrl);
                 try {
-                    await db.collection('users').doc(currentUid).set({ photoURL: dataUrl }, { merge: true });
-                } catch (err) {
+                    await db.collection('users').doc(currentUid).set({ photo: dataUrl }, { merge: true });                } catch (err) {
                     console.error(err);
                     alert('Could not save your profile picture: ' + err.message);
                 }
