@@ -158,7 +158,6 @@
 
 <!-- Name -->
 <div class="profile-hero">
-<div class="hero-avatar" id="hero-avatar">?</div>
         <div class="avatar-wrap">
 <div class="hero-avatar" id="hero-avatar">?</div>
 <button type="button" class="avatar-edit" id="avatar-edit-btn" aria-label="Change photo"><span class="material-symbols-outlined">photo_camera</span></button>
@@ -325,8 +324,7 @@ You signed in with Google, so there's no separate SkpQ password to change — ma
         const name = document.getElementById('name-input').value.trim() || 'Your name';
         document.getElementById('hero-name').textContent = name;
         document.getElementById('hero-email').textContent = document.getElementById('email-display').textContent;
-                if (!currentPhoto) document.getElementById('hero-avatar').textContent = name.charAt(0).toUpperCase();
-                    function applyPhoto() {
+        if (!currentPhoto) document.getElementById('hero-avatar').textContent = name.charAt(0).toUpperCase();                    function applyPhoto() {
         const el = document.getElementById('hero-avatar');
         if (currentPhoto) {
             el.style.backgroundImage = 'url("' + currentPhoto + '")';
@@ -380,5 +378,57 @@ You signed in with Google, so there's no separate SkpQ password to change — ma
     });    
     }
     document.getElementById('name-input').addEventListener('input', updateHero);
+            function applyPhoto() {
+        const el = document.getElementById('hero-avatar');
+        if (currentPhoto) {
+            el.style.backgroundImage = 'url("' + currentPhoto + '")';
+            el.textContent = '';
+        } else {
+            el.style.backgroundImage = '';
+            updateHero();
+        }
+    }
+
+    function resizeImage(file, size) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const side = Math.min(img.width, img.height);
+                const sx = (img.width - side) / 2;
+                const sy = (img.height - side) / 2;
+                canvas.getContext('2d').drawImage(img, sx, sy, side, side, 0, 0, size, size);
+                URL.revokeObjectURL(url);
+                resolve(canvas.toDataURL('image/jpeg', 0.8));
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error('Could not read that image'));
+            };
+            img.src = url;
+        });
+    }
+
+    document.getElementById('avatar-edit-btn').addEventListener('click', () => {
+        document.getElementById('photo-input').click();
+    });
+
+    document.getElementById('photo-input').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        try {
+            const dataUrl = await resizeImage(file, 256);
+            await db.collection('users').doc(currentUid).set({ photo: dataUrl }, { merge: true });
+            currentPhoto = dataUrl;
+            applyPhoto();
+        } catch (err) {
+            console.error(err);
+            alert('Could not save photo: ' + err.message);
+        }
+        e.target.value = '';
+    });
 </script>
 </body></html>
