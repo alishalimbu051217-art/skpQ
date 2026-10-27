@@ -55,6 +55,24 @@ const Cart = {
     return items;
   },
 
+    deleteItem(code) {
+    const items = this.get().filter(i => i.code !== code);
+    this.save(items);
+    return items;
+  },
+
+  changeQty(code, delta) {
+    let items = this.get();
+    const item = items.find(i => i.code === code);
+    if (item) {
+      item.qty += delta;
+      if (item.qty <= 0) {
+        items = items.filter(i => i.code !== code);
+      }
+    }
+    this.save(items);
+    return items;
+  },
   total() {
     return this.get().reduce((sum, i) => sum + i.price * i.qty, 0);
   },
