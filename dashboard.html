@@ -21,28 +21,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <!-- Tailwind Configuration -->
 <style>
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .active-icon { font-variation-settings: 'FILL' 1; }
-        
-        /* Smooth scrolling */
-        html { scroll-behavior: smooth; }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #bcc9c6; border-radius: 10px; }
-
-        /* Animation for scan button */
-        @keyframes pulse-teal {
-            0% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(13, 148, 136, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
-        }
-        .animate-scan { animation: pulse-teal 2s infinite; }
-    </style>
+body { font-family: 'Inter', sans-serif; }
+.material-symbols-outlined {
+font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.active-icon { font-variation-settings: 'FILL' 1; }
+/* Smooth scrolling */
+html { scroll-behavior: smooth; }
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #bcc9c6; border-radius: 10px; }
+/* Animation for scan button */
+@keyframes pulse-teal {
+0% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.4); }
+70% { box-shadow: 0 0 0 15px rgba(13, 148, 136, 0); }
+100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
+}
+.animate-scan { animation: pulse-teal 2s infinite; }
+</style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -83,8 +80,8 @@
 </div>
 <button class="w-full bg-primary hover:bg-[#0b7a70] text-white py-4 rounded-xl font-title-md flex items-center justify-center gap-3 transition-all transform active:scale-[0.98] shadow-lg" id="scan-cta" onclick="window.location.href='scan.html'">
 <span class="material-symbols-outlined">camera_alt</span>
-                        Scan Item
-                    </button>
+Scan Item
+</button>
 </div>
 </div>
 </section>
@@ -99,11 +96,13 @@
 <div>
 <p class="text-label-sm font-label-sm text-on-surface-variant">Last Visit</p>
 <p class="text-body-md font-bold" id="last-visit-value">--</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant" id="last-visit-sub">&nbsp;</p>
 </div>
 </div>
 <div class="text-right">
 <p class="text-label-sm font-label-sm text-on-surface-variant">Total Spent</p>
 <p class="text-body-md font-bold text-primary" id="total-spent-value">₹0.00</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant" id="total-spent-sub">&nbsp;</p>
 </div>
 </div>
 <!-- Cart Summary Card -->
@@ -143,118 +142,141 @@
 </a>
 </nav>
 <script>
-        function toggleDarkMode() {
-            const html = document.documentElement;
-            const icon = document.getElementById('theme-icon');
-            
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                icon.innerText = 'dark_mode';
-                localStorage.setItem('theme', 'light');
-            } else {
-                html.classList.add('dark');
-                icon.innerText = 'light_mode';
-                localStorage.setItem('theme', 'dark');
-            }
-        }
-
-        // Initialize theme based on preference
-        if (localStorage.getItem('theme') === 'dark') {
-            document.documentElement.classList.add('dark');
-            document.getElementById('theme-icon').innerText = 'light_mode';
-        } else {
-            document.documentElement.classList.remove('dark');
-            document.getElementById('theme-icon').innerText = 'dark_mode';
-        }
-
-        // Simple haptic-like interaction for buttons
-        document.querySelectorAll('button, a').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (window.navigator.vibrate) {
-                    window.navigator.vibrate(10);
-                }
-            });
-        });
-    </script>
+function toggleDarkMode() {
+const html = document.documentElement;
+const icon = document.getElementById('theme-icon');
+if (html.classList.contains('dark')) {
+html.classList.remove('dark');
+icon.innerText = 'dark_mode';
+localStorage.setItem('theme', 'light');
+} else {
+html.classList.add('dark');
+icon.innerText = 'light_mode';
+localStorage.setItem('theme', 'dark');
+}
+}
+// Initialize theme based on preference
+if (localStorage.getItem('theme') === 'dark') {
+document.documentElement.classList.add('dark');
+document.getElementById('theme-icon').innerText = 'light_mode';
+} else {
+document.documentElement.classList.remove('dark');
+document.getElementById('theme-icon').innerText = 'dark_mode';
+}
+// Simple haptic-like interaction for buttons
+document.querySelectorAll('button, a').forEach(btn => {
+btn.addEventListener('click', () => {
+if (window.navigator.vibrate) {
+window.navigator.vibrate(10);
+}
+});
+});
+</script>
 <script>
-    auth.onAuthStateChanged(user => {
-        if (!user) {
-            window.location.href = 'login.html';
-            return;
-        }
-        const firstName = (user.displayName || 'there').split(' ')[0];
-        document.getElementById('welcome-name').textContent = firstName;
+auth.onAuthStateChanged(user => {
+if (!user) {
+window.location.href = 'login.html';
+return;
+}
+const firstName = (user.displayName || 'there').split(' ')[0];
+document.getElementById('welcome-name').textContent = firstName;
+db.collection('users').doc(user.uid).get().then(doc => {
+const photoURL = doc.exists ? doc.data().photoURL : null;
+const img = document.getElementById('header-avatar-img');
+const fallback = document.getElementById('header-avatar-fallback');
+if (photoURL) {
+img.src = photoURL;
+img.classList.remove('hidden');
+fallback.classList.add('hidden');
+}
+}).catch(() => {});
+loadVisitAndLoyalty(user.uid);
+});
 
-        db.collection('users').doc(user.uid).get().then(doc => {
-            const photoURL = doc.exists ? doc.data().photoURL : null;
-            const img = document.getElementById('header-avatar-img');
-            const fallback = document.getElementById('header-avatar-fallback');
-            if (photoURL) {
-                img.src = photoURL;
-                img.classList.remove('hidden');
-                fallback.classList.add('hidden');
-            }
-        }).catch(() => {});
+// ---------------------------------------------------------
+// Helpers for showing dates and money in a clean, Indian format
+// ---------------------------------------------------------
+function formatVisit(date) {
+const now = new Date();
+const isToday = date.toDateString() === now.toDateString();
+const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+const isYesterday = date.toDateString() === yesterday.toDateString();
+const time = date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }).toUpperCase();
+if (isToday) return `Today, ${time}`;
+if (isYesterday) return `Yesterday, ${time}`;
+const day = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+return `${day}, ${time}`;
+}
 
-        loadVisitAndLoyalty(user.uid);
-    });
+function formatRupees(amount) {
+return '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
-    // ---------------------------------------------------------
-    // Last Visit — shows the previous visit's timestamp (stored in
-    // Firestore), then updates it to "now" for next time.
-    // ---------------------------------------------------------
-    function formatVisit(date) {
-        const now = new Date();
-        const isToday = date.toDateString() === now.toDateString();
-        const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-        const isYesterday = date.toDateString() === yesterday.toDateString();
-        const time = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-        if (isToday) return `Today, ${time}`;
-        if (isYesterday) return `Yesterday, ${time}`;
-        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + `, ${time}`;
-    }
+// Pick the best available time for an order: paid time, else created time
+function orderTime(data) {
+const t = data.paidAt || data.createdAt;
+return t && typeof t.toDate === 'function' ? t.toDate() : null;
+}
 
-    async function loadVisitAndLoyalty(uid) {
-        const userRef = db.collection('users').doc(uid);
+// ---------------------------------------------------------
+// Last Visit, Total Spent and loyalty: all computed from the
+// customer's real PAID orders in Firestore. Nothing is made up.
+// ---------------------------------------------------------
+async function loadVisitAndLoyalty(uid) {
+const visitEl = document.getElementById('last-visit-value');
+const visitSub = document.getElementById('last-visit-sub');
+const spentEl = document.getElementById('total-spent-value');
+const spentSub = document.getElementById('total-spent-sub');
 
-        // Last visit: read the previously stored value, then overwrite it with now
-        try {
-            const doc = await userRef.get();
-            const prevVisit = doc.exists && doc.data().lastVisit ? doc.data().lastVisit.toDate() : null;
-            document.getElementById('last-visit-value').textContent = prevVisit ? formatVisit(prevVisit) : 'First visit!';
-            await userRef.set({ lastVisit: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-        } catch (err) {
-            console.error('Could not load/update last visit:', err);
-        }
+try {
+const snap = await db.collection('sessions')
+.where('customerUid', '==', uid)
+.where('status', '==', 'paid')
+.get();
 
-        // Total spent + loyalty points/tier: computed live from paid orders
-        try {
-            const snap = await db.collection('sessions')
-                .where('customerUid', '==', uid)
-                .where('status', '==', 'paid')
-                .get();
+let totalSpent = 0;
+let orderCount = 0;
+let latest = null;
 
-            let totalSpent = 0;
-            snap.forEach(doc => { totalSpent += doc.data().total || 0; });
+snap.forEach(doc => {
+const data = doc.data();
+totalSpent += Number(data.total) || 0;
+orderCount += 1;
+const t = orderTime(data);
+if (t && (!latest || t > latest)) latest = t;
+});
 
-            document.getElementById('total-spent-value').textContent = `₹${totalSpent.toFixed(2)}`;
+if (orderCount === 0) {
+visitEl.textContent = 'No visits yet';
+visitSub.textContent = 'Your first purchase will show here';
+spentEl.textContent = formatRupees(0);
+spentSub.textContent = 'No orders yet';
+} else {
+visitEl.textContent = latest ? formatVisit(latest) : 'Date unavailable';
+visitSub.textContent = 'Last completed purchase';
+spentEl.textContent = formatRupees(totalSpent);
+spentSub.textContent = `${orderCount} order${orderCount === 1 ? '' : 's'}`;
+}
 
-            // 1 point per ₹10 spent; simple tier thresholds
-            const points = Math.floor(totalSpent / 10);
-            let tier = 'Bronze Tier';
-            if (totalSpent >= 5000) tier = 'Gold Tier';
-            else if (totalSpent >= 1500) tier = 'Silver Tier';
+// 1 point per ₹10 spent; simple tier thresholds
+const points = Math.floor(totalSpent / 10);
+let tier = 'Bronze Tier';
+if (totalSpent >= 5000) tier = 'Gold Tier';
+else if (totalSpent >= 1500) tier = 'Silver Tier';
+document.getElementById('loyalty-points').textContent = points.toLocaleString('en-IN');
+document.getElementById('loyalty-tier').textContent = tier;
+} catch (err) {
+console.error('Could not load visit and spending stats:', err);
+visitEl.textContent = 'Unavailable';
+visitSub.textContent = 'Check your connection';
+spentEl.textContent = '--';
+spentSub.textContent = '\u00a0';
+}
+}
 
-            document.getElementById('loyalty-points').textContent = points.toLocaleString();
-            document.getElementById('loyalty-tier').textContent = tier;
-        } catch (err) {
-            console.error('Could not compute loyalty stats:', err);
-        }
-    }
-
-    const dashItems = Cart.get();
-    const dashQty = dashItems.reduce((s, i) => s + i.qty, 0);
-    document.getElementById('dash-cart-badge').textContent = `${dashQty} Item${dashQty === 1 ? '' : 's'}`;
-    document.getElementById('dash-cart-total').textContent = `₹${Cart.total().toFixed(2)}`;
+const dashItems = Cart.get();
+const dashQty = dashItems.reduce((s, i) => s + i.qty, 0);
+document.getElementById('dash-cart-badge').textContent = `${dashQty} Item${dashQty === 1 ? '' : 's'}`;
+document.getElementById('dash-cart-total').textContent = `₹${Cart.total().toFixed(2)}`;
 </script>
 </body></html>
