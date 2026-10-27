@@ -20,31 +20,73 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            display: inline-block;
-            line-height: 1;
-        }
-        .scan-line {
-            animation: scan-move 2s ease-in-out infinite;
-        }
-        @keyframes scan-move {
-            0%, 100% { top: 0%; }
-            50% { top: 100%; }
-        }
-        .confirmation-popup {
-            animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        @keyframes slide-up {
-            from { transform: translateY(100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-    </style>
+.material-symbols-outlined {
+font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+display: inline-block;
+line-height: 1;
+}
+.scan-line {
+animation: scan-move 2s ease-in-out infinite;
+}
+@keyframes scan-move {
+0%, 100% { top: 0%; }
+50% { top: 100%; }
+}
+.confirmation-popup {
+animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slide-up {
+from { transform: translateY(100px); opacity: 0; }
+to { transform: translateY(0); opacity: 1; }
+}
+.glass-panel {
+background: rgba(255, 255, 255, 0.85);
+backdrop-filter: blur(12px);
+-webkit-backdrop-filter: blur(12px);
+}
+
+/* ---- Manual barcode entry (bottom panel) ---- */
+.mq-manual {
+position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 35;
+max-width: 480px; margin: 0 auto;
+background: rgba(255, 255, 255, 0.94);
+backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+border-radius: 16px; padding: 12px 12px 10px;
+box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+.mq-manual-label { font-size: 12px; font-weight: 600; color: #3d4947; margin: 0 0 8px; }
+.mq-manual-row { display: flex; gap: 8px; }
+.mq-manual-row input {
+flex: 1; min-width: 0; border: 1.5px solid #bcc9c6; border-radius: 12px;
+padding: 12px 14px; font-size: 16px; background: #fff; color: #191c1c;
+outline: none; letter-spacing: 0.5px;
+}
+.mq-manual-row input:focus { border-color: #00685f; }
+.mq-manual-row button {
+background: #00685f; color: #fff; border: none; border-radius: 12px;
+padding: 0 22px; font-weight: 700; font-size: 15px; cursor: pointer;
+}
+.mq-manual-row button:disabled { opacity: 0.6; cursor: default; }
+.mq-manual-msg { font-size: 12px; margin: 8px 2px 0; display: none; }
+.mq-manual-msg.show { display: block; }
+.mq-manual-msg.error { color: #ba1a1a; }
+.mq-manual-msg.ok { color: #00685f; font-weight: 600; }
+
+/* ---- Camera problem message ---- */
+.mq-camera-status {
+position: absolute; left: 16px; right: 16px; top: 96px; z-index: 25;
+max-width: 480px; margin: 0 auto;
+background: rgba(255, 255, 255, 0.95); border-radius: 16px; padding: 14px 16px;
+box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
+}
+.mq-camera-status[hidden] { display: none; }
+.mq-camera-status p { margin: 0; font-size: 13px; line-height: 1.45; color: #191c1c; }
+.mq-camera-status button {
+background: transparent; color: #00685f; border: 2px solid rgba(0, 104, 95, 0.35);
+border-radius: 12px; padding: 8px 16px; font-weight: 700; font-size: 13px; cursor: pointer;
+}
+</style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -90,8 +132,15 @@
 <div class="absolute top-12 w-full text-center z-20">
 <p class="text-white font-title-md drop-shadow-md">Align barcode within the frame</p>
 </div>
-<!-- Scanned Item Confirmation Popup (Simulated active state) -->
-<div class="confirmation-popup absolute bottom-gutter left-gutter right-gutter z-30 hidden" id="confirmation-popup">
+
+<!-- Camera problem message (only shown if the camera can't start) -->
+<div class="mq-camera-status" id="camera-status" hidden>
+<p id="camera-status-text"></p>
+<button id="camera-retry" type="button">Try camera again</button>
+</div>
+
+<!-- Scanned Item Confirmation Popup (now shown near the top so it never covers the manual entry box) -->
+<div class="confirmation-popup absolute left-gutter right-gutter z-30 hidden" id="confirmation-popup" style="bottom: auto; top: 92px;">
 <div class="glass-panel p-lg rounded-2xl shadow-lg border border-white/20">
 <div class="flex items-center gap-md">
 <div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center shrink-0">
@@ -107,14 +156,24 @@
 </div>
 </div>
 </main>
+
+<!-- Manual barcode entry -->
+<div class="mq-manual" id="manual-entry">
+<p class="mq-manual-label">Can't scan? Type the number printed under the barcode</p>
+<div class="mq-manual-row">
+<input id="manual-barcode" type="text" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="e.g. 8901595864348" aria-label="Barcode number"/>
+<button id="manual-add" type="button">Add</button>
+</div>
+<p class="mq-manual-msg" id="manual-msg"></p>
+</div>
+
 <!-- Draggable floating cart pill (tap to expand, drag to move out of the way) -->
-<div class="fixed z-40 select-none" id="cart-pill" style="right: 16px; bottom: 96px; touch-action: none;">
+<div class="fixed z-40 select-none" id="cart-pill" style="right: 16px; bottom: 170px; touch-action: none;">
 <button class="flex items-center gap-2 bg-primary text-on-primary rounded-full pl-4 pr-3 py-3 shadow-lg active:scale-95 transition-transform" id="cart-pill-btn">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shopping_cart</span>
 <span class="font-label-md" id="cart-count">0 items</span>
 </button>
 </div>
-
 <!-- Expanded cart panel (hidden until the pill is tapped) -->
 <div class="fixed inset-x-0 bottom-0 z-40 bg-surface-container rounded-t-3xl shadow-[0px_-10px_30px_rgba(0,0,0,0.1)] max-h-[75vh] hidden flex-col" id="cart-drawer">
 <div class="px-gutter pt-md pb-sm flex justify-between items-center cursor-pointer" onclick="toggleDrawer()">
@@ -146,218 +205,310 @@
 <!-- Bottom Nav Bar (Suppressed on focused scan task as per mandate but present as shell reference) -->
 <!-- Not rendered to prioritize the scan canvas and focused journey -->
 <script>
-        function toggleDrawer() {
-            document.getElementById('cart-drawer').classList.toggle('hidden');
-            document.getElementById('cart-drawer').classList.toggle('flex');
-        }
-
-        // Micro-interaction: Gentle shake of the scan line occasionally
-        setInterval(() => {
-            const line = document.querySelector('.scan-line');
-            if (line) line.style.opacity = (0.5 + Math.random() * 0.5).toString();
-        }, 500);
-
-        // ---------------------------------------------------------
-        // Draggable floating cart pill — tap to open the cart,
-        // drag to move it out of the way of the camera view.
-        // ---------------------------------------------------------
-        (function makePillDraggable() {
-            const pill = document.getElementById('cart-pill');
-            const btn = document.getElementById('cart-pill-btn');
-            let dragging = false, moved = false, startX, startY, startRight, startBottom;
-
-            btn.addEventListener('pointerdown', (e) => {
-                dragging = true;
-                moved = false;
-                startX = e.clientX;
-                startY = e.clientY;
-                const rect = pill.getBoundingClientRect();
-                startRight = window.innerWidth - rect.right;
-                startBottom = window.innerHeight - rect.bottom;
-                btn.setPointerCapture(e.pointerId);
-            });
-            btn.addEventListener('pointermove', (e) => {
-                if (!dragging) return;
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
-                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
-                pill.style.right = Math.max(8, startRight - dx) + 'px';
-                pill.style.bottom = Math.max(8, startBottom - dy) + 'px';
-            });
-            btn.addEventListener('pointerup', () => {
-                dragging = false;
-                if (!moved) toggleDrawer(); // it was a tap, not a drag
-            });
-        })();
-    </script>
+function toggleDrawer() {
+document.getElementById('cart-drawer').classList.toggle('hidden');
+document.getElementById('cart-drawer').classList.toggle('flex');
+}
+// Micro-interaction: Gentle shake of the scan line occasionally
+setInterval(() => {
+const line = document.querySelector('.scan-line');
+if (line) line.style.opacity = (0.5 + Math.random() * 0.5).toString();
+}, 500);
+// ---------------------------------------------------------
+// Draggable floating cart pill — tap to open the cart,
+// drag to move it out of the way of the camera view.
+// ---------------------------------------------------------
+(function makePillDraggable() {
+const pill = document.getElementById('cart-pill');
+const btn = document.getElementById('cart-pill-btn');
+let dragging = false, moved = false, startX, startY, startRight, startBottom;
+btn.addEventListener('pointerdown', (e) => {
+dragging = true;
+moved = false;
+startX = e.clientX;
+startY = e.clientY;
+const rect = pill.getBoundingClientRect();
+startRight = window.innerWidth - rect.right;
+startBottom = window.innerHeight - rect.bottom;
+btn.setPointerCapture(e.pointerId);
+});
+btn.addEventListener('pointermove', (e) => {
+if (!dragging) return;
+const dx = e.clientX - startX;
+const dy = e.clientY - startY;
+if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
+pill.style.right = Math.max(8, startRight - dx) + 'px';
+pill.style.bottom = Math.max(8, startBottom - dy) + 'px';
+});
+btn.addEventListener('pointerup', () => {
+dragging = false;
+if (!moved) toggleDrawer(); // it was a tap, not a drag
+});
+})();
+</script>
 <script>
-    // ---------------------------------------------------------
-    // Require login
-    // ---------------------------------------------------------
-    auth.onAuthStateChanged(user => {
-        if (!user) window.location.href = 'login.html';
-    });
+// ---------------------------------------------------------
+// Require login
+// ---------------------------------------------------------
+auth.onAuthStateChanged(user => {
+if (!user) window.location.href = 'login.html';
+});
+document.querySelector('header button').addEventListener('click', () => {
+window.location.href = 'dashboard.html';
+});
+// ---------------------------------------------------------
+// Product catalog — checks Firestore first (your real catalog,
+// uploaded via import-products.html), falls back to this small
+// local list so the demo still works offline / before you've
+// uploaded anything.
+// ---------------------------------------------------------
+const LOCAL_FALLBACK_DB = {
+"0123456789012": { name: "Whole Milk, 1L", category: "Organic Milk", price: 65.00, weightGrams: 1030 },
+"0234567890123": { name: "Red Apples (6pk)", category: "Produce", price: 120.00, weightGrams: 900 },
+"0345678901234": { name: "Artisan Sourdough", category: "Bakery", price: 90.00, weightGrams: 400 }
+};
+const productCache = {};
+function formatWeight(grams) {
+if (!grams) return 'weight not set';
+return grams >= 1000 ? `${(grams / 1000).toFixed(2)} kg` : `${grams} g`;
+}
+async function lookupProduct(code) {
+if (productCache[code]) return productCache[code];
+try {
+const doc = await db.collection('products').doc(code).get();
+if (doc.exists) {
+productCache[code] = doc.data();
+return doc.data();
+}
+} catch (err) {
+console.warn('Firestore product lookup failed, using local fallback:', err);
+}
+return LOCAL_FALLBACK_DB[code] || { name: `Item ${code}`, category: "Unrecognized item", price: 0, weightGrams: 0, unrecognized: true };
+}
+function renderCart() {
+const items = Cart.get();
+const totalQty = items.reduce((s, i) => s + i.qty, 0);
+document.getElementById('cart-count').textContent = `${totalQty} item${totalQty === 1 ? '' : 's'}`;
+document.getElementById('cart-count-full').textContent = `${totalQty} item${totalQty === 1 ? '' : 's'} in cart`;
+document.getElementById('cart-subtotal').textContent = `₹${Cart.total().toFixed(2)}`;
+const listEl = document.getElementById('drawer-items');
+if (items.length === 0) {
+listEl.innerHTML = '<p class="text-center text-on-surface-variant text-sm py-4">No items scanned yet.</p>';
+return;
+}
+listEl.innerHTML = items.map(i => `
+<div class="flex items-center gap-md p-md bg-surface-container-lowest rounded-2xl border border-outline-variant/30">
+<div class="flex-1">
+<p class="font-label-md text-on-surface">${i.name}</p>
+<p class="text-xs text-on-surface-variant">Qty: ${i.qty} • ${formatWeight(i.weightGrams)} each</p>
+</div>
+<span class="font-bold text-on-surface">₹${(i.price * i.qty).toFixed(2)}</span>
+<button class="w-9 h-9 flex items-center justify-center rounded-full text-error hover:bg-error/10 transition-colors" onclick="removeScannedItem('${i.code}')" aria-label="Remove ${i.name}">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+`).join('');
+}
+function removeScannedItem(code) {
+Cart.removeItem(code);
+renderCart();
+if (window.navigator.vibrate) window.navigator.vibrate(10);
+}
+// ---------------------------------------------------------
+// Brief on-screen confirmation toast (auto-dismisses).
+// Scanned items are added to the cart immediately — no extra
+// tap needed — this toast is just a "got it" confirmation.
+// ---------------------------------------------------------
+let toastTimer = null;
+function showScanToast(product) {
+const popup = document.getElementById('confirmation-popup');
+document.getElementById('popup-category').textContent = product.category;
+document.getElementById('popup-name').textContent = product.name;
+document.getElementById('popup-price').textContent = `₹${product.price.toFixed(2)} • ${formatWeight(product.weightGrams)} • added to cart`;
+popup.classList.remove('hidden');
+clearTimeout(toastTimer);
+toastTimer = setTimeout(() => popup.classList.add('hidden'), 1800);
+}
 
-    document.querySelector('header button').addEventListener('click', () => {
-        window.location.href = 'dashboard.html';
-    });
+// One shared place that puts an item in the cart (used by the
+// camera scan AND by manual barcode entry)
+function addProductToCart(code, product) {
+Cart.addItem({ code, name: product.name, price: product.price, weightGrams: product.weightGrams || 0, qty: 1 });
+renderCart();
+showScanToast(product);
+if (window.navigator.vibrate) window.navigator.vibrate(30);
+}
 
-    // ---------------------------------------------------------
-    // Product catalog — checks Firestore first (your real catalog,
-    // uploaded via import-products.html), falls back to this small
-    // local list so the demo still works offline / before you've
-    // uploaded anything.
-    // ---------------------------------------------------------
-    const LOCAL_FALLBACK_DB = {
-        "0123456789012": { name: "Whole Milk, 1L", category: "Organic Milk", price: 65.00, weightGrams: 1030 },
-        "0234567890123": { name: "Red Apples (6pk)", category: "Produce", price: 120.00, weightGrams: 900 },
-        "0345678901234": { name: "Artisan Sourdough", category: "Bakery", price: 90.00, weightGrams: 400 }
-    };
-    const productCache = {};
+// ---------------------------------------------------------
+// Manual barcode entry (for items the camera can't read)
+// ---------------------------------------------------------
+function setManualMessage(text, isError) {
+const el = document.getElementById('manual-msg');
+el.textContent = text;
+el.className = 'mq-manual-msg show ' + (isError ? 'error' : 'ok');
+}
 
-    function formatWeight(grams) {
-        if (!grams) return 'weight not set';
-        return grams >= 1000 ? `${(grams / 1000).toFixed(2)} kg` : `${grams} g`;
-    }
+// Barcodes can be written with or without a leading zero
+// (12-digit UPC vs 13-digit EAN), so try the likely variants.
+async function findProductForManualCode(code) {
+const candidates = [code];
+if (code.length === 12) candidates.push('0' + code);
+if (code.length === 13 && code.startsWith('0')) candidates.push(code.slice(1));
+for (const c of candidates) {
+const product = await lookupProduct(c);
+if (!product.unrecognized) return { code: c, product };
+}
+return null;
+}
 
-    async function lookupProduct(code) {
-        if (productCache[code]) return productCache[code];
-        try {
-            const doc = await db.collection('products').doc(code).get();
-            if (doc.exists) {
-                productCache[code] = doc.data();
-                return doc.data();
-            }
-        } catch (err) {
-            console.warn('Firestore product lookup failed, using local fallback:', err);
-        }
-        return LOCAL_FALLBACK_DB[code] || { name: `Item ${code}`, category: "Unrecognized item", price: 0, weightGrams: 0 };
-    }
+async function addManualBarcode() {
+const input = document.getElementById('manual-barcode');
+const addBtn = document.getElementById('manual-add');
+const code = input.value.replace(/\s+/g, '');
 
-    function renderCart() {
-        const items = Cart.get();
-        const totalQty = items.reduce((s, i) => s + i.qty, 0);
+if (!/^\d{8,14}$/.test(code)) {
+setManualMessage('Please enter the 8 to 14 digit number printed under the barcode.', true);
+return;
+}
 
-        document.getElementById('cart-count').textContent = `${totalQty} item${totalQty === 1 ? '' : 's'}`;
-        document.getElementById('cart-count-full').textContent = `${totalQty} item${totalQty === 1 ? '' : 's'} in cart`;
-        document.getElementById('cart-subtotal').textContent = `₹${Cart.total().toFixed(2)}`;
+addBtn.disabled = true;
+try {
+const found = await findProductForManualCode(code);
+if (!found) {
+setManualMessage("We couldn't find that product. Check the number and try again, or ask a staff member.", true);
+return;
+}
+addProductToCart(found.code, found.product);
+setManualMessage(`Added: ${found.product.name}`, false);
+input.value = '';
+} catch (err) {
+console.error('Manual barcode add failed:', err);
+setManualMessage('Something went wrong. Please try again.', true);
+} finally {
+addBtn.disabled = false;
+}
+}
 
-        const listEl = document.getElementById('drawer-items');
-        if (items.length === 0) {
-            listEl.innerHTML = '<p class="text-center text-on-surface-variant text-sm py-4">No items scanned yet.</p>';
-            return;
-        }
-        listEl.innerHTML = items.map(i => `
-            <div class="flex items-center gap-md p-md bg-surface-container-lowest rounded-2xl border border-outline-variant/30">
-                <div class="flex-1">
-                    <p class="font-label-md text-on-surface">${i.name}</p>
-                    <p class="text-xs text-on-surface-variant">Qty: ${i.qty} • ${formatWeight(i.weightGrams)} each</p>
-                </div>
-                <span class="font-bold text-on-surface">₹${(i.price * i.qty).toFixed(2)}</span>
-                <button class="w-9 h-9 flex items-center justify-center rounded-full text-error hover:bg-error/10 transition-colors" onclick="removeScannedItem('${i.code}')" aria-label="Remove ${i.name}">
-                    <span class="material-symbols-outlined text-[20px]">delete</span>
-                </button>
-            </div>
-        `).join('');
-    }
+document.getElementById('manual-add').addEventListener('click', addManualBarcode);
+document.getElementById('manual-barcode').addEventListener('keydown', e => {
+if (e.key === 'Enter') addManualBarcode();
+});
+// Only allow digits while typing
+document.getElementById('manual-barcode').addEventListener('input', e => {
+e.target.value = e.target.value.replace(/\D/g, '');
+});
 
-    function removeScannedItem(code) {
-        Cart.removeItem(code);
-        renderCart();
-        if (window.navigator.vibrate) window.navigator.vibrate(10);
-    }
+// ---------------------------------------------------------
+// Quagga2 barcode scanning
+// ---------------------------------------------------------
+let scanLocked = false; // global cooldown — prevents one physical
+// barcode from being added as multiple items
+// once it's been successfully read
+// Quagga fires onDetected on EVERY camera frame, and any single frame
+// can misread a barcode (blur, glare, bad angle) — especially the
+// first frame or two before the camera settles. Instead of trusting
+// the very first read, we require the SAME code to come up several
+// times in a short window before accepting it as real. This is what
+// was causing "unrecognized item" / wrong weight on early attempts.
+const CONSENSUS_COUNT = 3; // reads needed before accepting a code
+const CONSENSUS_WINDOW_MS = 1200; // how recent those reads must be
+let recentReads = []; // { code, time }
+let detectorBound = false; // makes sure we only listen for scans once
 
-    // ---------------------------------------------------------
-    // Brief on-screen confirmation toast (auto-dismisses).
-    // Scanned items are added to the cart immediately — no extra
-    // tap needed — this toast is just a "got it" confirmation.
-    // ---------------------------------------------------------
-    let toastTimer = null;
-    function showScanToast(product) {
-        const popup = document.getElementById('confirmation-popup');
-        document.getElementById('popup-category').textContent = product.category;
-        document.getElementById('popup-name').textContent = product.name;
-        document.getElementById('popup-price').textContent = `₹${product.price.toFixed(2)} • ${formatWeight(product.weightGrams)} • added to cart`;
-        popup.classList.remove('hidden');
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => popup.classList.add('hidden'), 1800);
-    }
+function showCameraProblem(message) {
+document.getElementById('camera-status-text').textContent = message + ' You can still add items with the box at the bottom.';
+document.getElementById('camera-status').hidden = false;
+document.getElementById('camera-fallback').style.display = '';
+}
 
-    // ---------------------------------------------------------
-    // Quagga2 barcode scanning
-    // ---------------------------------------------------------
-    let scanLocked = false; // global cooldown — prevents one physical
-                             // barcode from being added as multiple items
-                             // once it's been successfully read
+function explainCameraError(err) {
+const name = (err && (err.name || err.message)) || '';
+if (/NotAllowed|Permission/i.test(name)) {
+return 'Camera access is blocked. Click the lock icon next to the web address, set Camera to Allow, then tap "Try camera again".';
+}
+if (/NotFound|DevicesNotFound/i.test(name)) {
+return 'No camera was found on this device.';
+}
+if (/NotReadable|TrackStart/i.test(name)) {
+return 'The camera is being used by another app or tab. Close it, then tap "Try camera again".';
+}
+return `The camera could not start (${name || 'unknown error'}).`;
+}
 
-    // Quagga fires onDetected on EVERY camera frame, and any single frame
-    // can misread a barcode (blur, glare, bad angle) — especially the
-    // first frame or two before the camera settles. Instead of trusting
-    // the very first read, we require the SAME code to come up several
-    // times in a short window before accepting it as real. This is what
-    // was causing "unrecognized item" / wrong weight on early attempts.
-    const CONSENSUS_COUNT = 3;      // reads needed before accepting a code
-    const CONSENSUS_WINDOW_MS = 800; // how recent those reads must be
-    let recentReads = []; // { code, time }
+async function onBarcodeDetected(result) {
+if (scanLocked) return;
+const code = result.codeResult.code;
+const now = Date.now();
+// Drop stale reads, then log this one
+recentReads = recentReads.filter(r => now - r.time < CONSENSUS_WINDOW_MS);
+recentReads.push({ code, time: now });
+// Not enough agreement yet — wait for more frames
+const matches = recentReads.filter(r => r.code === code).length;
+if (matches < CONSENSUS_COUNT) return;
+// We have consensus — this read is trustworthy. Lock and commit.
+scanLocked = true;
+recentReads = [];
+const product = await lookupProduct(code);
+addProductToCart(code, product);
+// Require a fresh, deliberate hold-up-the-item moment before
+// the next scan is accepted — this is what stops one barcode
+// from flooding in as 5-9 items.
+setTimeout(() => { scanLocked = false; }, 2000);
+}
 
-    function startScanner() {
-        if (typeof Quagga === 'undefined') {
-            console.warn('Quagga2 not loaded — check your internet connection / CDN.');
-            return;
-        }
-        Quagga.init({
-            inputStream: {
-                type: "LiveStream",
-                target: document.querySelector('#scanner-viewport'),
-                constraints: { facingMode: "environment" }
-            },
-            decoder: {
-                readers: ["ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_128_reader"]
-            },
-            locate: true
-        }, err => {
-            if (err) {
-                console.error('Quagga init failed:', err);
-                return; // Falls back to the static background image
-            }
-            document.getElementById('camera-fallback').style.display = 'none';
-            Quagga.start();
-        });
+function startScanner(simpleConstraints) {
+document.getElementById('camera-status').hidden = true;
 
-        Quagga.onDetected(async result => {
-            if (scanLocked) return;
+if (typeof Quagga === 'undefined') {
+console.warn('Quagga2 not loaded — check your internet connection / CDN.');
+showCameraProblem('The scanner could not load. Check your internet connection and reload the page.');
+return;
+}
 
-            const code = result.codeResult.code;
-            const now = Date.now();
+const constraints = simpleConstraints
+? {}
+: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } };
 
-            // Drop stale reads, then log this one
-            recentReads = recentReads.filter(r => now - r.time < CONSENSUS_WINDOW_MS);
-            recentReads.push({ code, time: now });
+Quagga.init({
+inputStream: {
+type: "LiveStream",
+target: document.querySelector('#scanner-viewport'),
+constraints: constraints,
+// Only look for barcodes in the middle of the picture (where the frame is)
+area: { top: "20%", right: "10%", left: "10%", bottom: "20%" }
+},
+locator: { patchSize: "medium", halfSample: true },
+numOfWorkers: Math.min(navigator.hardwareConcurrency || 2, 4),
+frequency: 10,
+decoder: {
+readers: ["ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_128_reader"]
+},
+locate: true
+}, err => {
+if (err) {
+console.error('Quagga init failed:', err);
+// If the camera didn't like our requested settings, retry once with plain settings
+if (!simpleConstraints && /Overconstrained|Constraint/i.test((err && (err.name || err.message)) || '')) {
+startScanner(true);
+return;
+}
+showCameraProblem(explainCameraError(err));
+return;
+}
+document.getElementById('camera-fallback').style.display = 'none';
+if (!detectorBound) {
+Quagga.onDetected(onBarcodeDetected);
+detectorBound = true;
+}
+Quagga.start();
+});
+}
 
-            // Not enough agreement yet — wait for more frames
-            const matches = recentReads.filter(r => r.code === code).length;
-            if (matches < CONSENSUS_COUNT) return;
+document.getElementById('camera-retry').addEventListener('click', () => startScanner());
 
-            // We have consensus — this read is trustworthy. Lock and commit.
-            scanLocked = true;
-            recentReads = [];
-
-            const product = await lookupProduct(code);
-            Cart.addItem({ code, name: product.name, price: product.price, weightGrams: product.weightGrams || 0, qty: 1 });
-            renderCart();
-            showScanToast(product);
-            if (window.navigator.vibrate) window.navigator.vibrate(30);
-
-            // Require a fresh, deliberate hold-up-the-item moment before
-            // the next scan is accepted — this is what stops one barcode
-            // from flooding in as 5-9 items.
-            setTimeout(() => { scanLocked = false; }, 2000);
-        });
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-        renderCart();
-        startScanner();
-    });
+window.addEventListener('DOMContentLoaded', () => {
+renderCart();
+startScanner();
+});
 </script>
 </body></html>
