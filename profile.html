@@ -272,18 +272,23 @@
             listEl.innerHTML = snap.docs.map(doc => {
                 const d = doc.data();
                 const date = d.createdAt ? d.createdAt.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '--';
-                const itemCount = (d.items || []).reduce((s, i) => s + i.qty, 0);
+                                const itemCount = (d.items || []).reduce((s, i) => s + i.qty, 0);
+                const itemsHtml = (d.items || []).map(i => `
+                    <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:14px;">
+                        <span>${i.name || i.code || 'Item'} × ${i.qty}</span>
+                        <span>₹${((i.price || 0) * i.qty).toFixed(2)}</span>
+                    </div>`).join('');
                 return `
-                    <div class="flex items-center justify-between p-sm rounded-lg hover:bg-surface-variant/50 transition-colors">
-                        <div class="flex items-center gap-md">
-                            <span class="material-symbols-outlined text-on-surface-variant">receipt_long</span>
+                    <details style="padding:10px 8px;">
+                        <summary style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;list-style:none;">
                             <div>
                                 <p class="font-label-md text-on-surface">${date}</p>
-                                <p class="text-xs text-on-surface-variant">${itemCount} item${itemCount === 1 ? '' : 's'}</p>
+                                <p class="text-xs text-on-surface-variant">${itemCount} item${itemCount === 1 ? '' : 's'} · tap to view</p>
                             </div>
-                        </div>
-                        <span class="font-title-md text-primary">₹${(d.total || 0).toFixed(2)}</span>
-                    </div>
+                            <span class="font-title-md text-primary">₹${(d.total || 0).toFixed(2)}</span>
+                        </summary>
+                        <div style="margin-top:8px;border-top:1px solid rgba(0,0,0,0.08);padding-top:6px;">${itemsHtml || '<p class="text-xs">No item details saved.</p>'}</div>
+                    </details>
                 `;
             }).join('<div class="h-px bg-outline-variant/20 mx-2"></div>');
         } catch (err) {
