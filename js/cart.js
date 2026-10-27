@@ -37,6 +37,24 @@ const Cart = {
     return items;
   },
 
+  // Remove the whole line, whatever the quantity is
+  deleteItem(code) {
+    const items = this.get().filter(i => i.code !== code);
+    this.save(items);
+    return items;
+  },
+
+  // Change quantity by +1 / -1 (going below 1 removes the item, max 99)
+  changeQty(code, delta) {
+    let items = this.get();
+    const item = items.find(i => i.code === code);
+    if (!item) return items;
+    item.qty = Math.min(99, item.qty + delta);
+    if (item.qty < 1) items = items.filter(i => i.code !== code);
+    this.save(items);
+    return items;
+  },
+
   total() {
     return this.get().reduce((sum, i) => sum + i.price * i.qty, 0);
   },
