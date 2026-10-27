@@ -65,7 +65,50 @@
         header h1 {
             font-size: 22px;
             font-weight: 800;
-        }  
+        }
+                /* SkpQ card look */
+        main input, main select, #email-display {
+            border-radius: 8px !important;
+        }
+        #save-btn, #change-password-btn {
+            border-radius: 8px !important;
+        }
+        .profile-hero {
+            background: linear-gradient(135deg, #00685f 0%, #1b6b51 100%);
+            color: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .hero-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .hero-name {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .hero-email {
+            font-size: 13px;
+            opacity: 0.85;
+            word-break: break-all;
+        }
+        .form-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -85,7 +128,16 @@
 <main class="flex-1 px-gutter py-lg space-y-lg pb-32">
 
 <!-- Name -->
-<div class="space-y-xs">
+<div class="profile-hero">
+<div class="hero-avatar" id="hero-avatar">?</div>
+<div>
+<div class="hero-name" id="hero-name">--</div>
+<div class="hero-email" id="hero-email">--</div>
+</div>
+</div>
+
+<div class="form-card space-y-lg">
+        <div class="space-y-xs">
 <label class="text-xs font-label-sm text-on-surface-variant" for="name-input">Full Name</label>
 <input id="name-input" type="text" placeholder="Your name" class="w-full h-12 px-4 bg-surface-container-low border border-outline-variant rounded-xl focus:border-primary outline-none text-on-surface"/>
 </div>
@@ -135,7 +187,8 @@ Update Password
 <p class="text-center text-sm hidden" id="password-msg"></p>
 </div>
 
-<p class="text-xs text-center text-on-surface-variant pt-md" id="google-account-note" style="display:none;">
+</div>
+        <p class="text-xs text-center text-on-surface-variant pt-md" id="google-account-note" style="display:none;">
 You signed in with Google, so there's no separate SkpQ password to change — manage your Google account password through your Google account settings instead.
 </p>
 
@@ -158,7 +211,7 @@ You signed in with Google, so there's no separate SkpQ password to change — ma
             document.getElementById('google-account-note').style.display = 'block';
         }
 
-        loadProfileDoc();
+                loadProfileDoc().then(updateHero);
     });
 
     async function loadProfileDoc() {
@@ -232,5 +285,12 @@ You signed in with Google, so there's no separate SkpQ password to change — ma
             msg.className = 'text-center text-sm text-error';
         }
     });
+            function updateHero() {
+        const name = document.getElementById('name-input').value.trim() || 'Your name';
+        document.getElementById('hero-name').textContent = name;
+        document.getElementById('hero-email').textContent = document.getElementById('email-display').textContent;
+        document.getElementById('hero-avatar').textContent = name.charAt(0).toUpperCase();
+    }
+    document.getElementById('name-input').addEventListener('input', updateHero);
 </script>
 </body></html>
