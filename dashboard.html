@@ -89,18 +89,18 @@ Scan Item
 <section class="grid grid-cols-2 gap-4">
 <!-- Last Visit -->
 <div class="col-span-2 bg-surface-container-low dark:bg-inverse-surface p-4 rounded-2xl border border-outline-variant/30 flex items-center justify-between">
-<div class="flex items-center gap-3">
-<div class="p-2 bg-secondary-container rounded-lg">
+<div class="flex items-center gap-3" style="min-width:0;flex:1;">
+<div class="p-2 bg-secondary-container rounded-lg" style="flex-shrink:0;">
 <span class="material-symbols-outlined text-on-secondary-container">history</span>
 </div>
-<div>
+<div style="min-width:0;">
 <p class="text-label-sm font-label-sm text-on-surface-variant">Last Visit</p>
 <p class="text-body-md font-bold" id="last-visit-value">--</p>
-<p class="text-label-sm font-label-sm text-on-surface-variant" id="last-visit-sub">&nbsp;</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant" id="last-visit-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">&nbsp;</p>
 </div>
 </div>
-<div class="text-right">
-<p class="text-label-sm font-label-sm text-on-surface-variant">Total Spent</p>
+<div class="text-right" style="flex-shrink:0;padding-left:12px;">
+<p class="text-label-sm font-label-sm text-on-surface-variant">Last Bill</p>
 <p class="text-body-md font-bold text-primary" id="total-spent-value">₹0.00</p>
 <p class="text-label-sm font-label-sm text-on-surface-variant" id="total-spent-sub">&nbsp;</p>
 </div>
@@ -219,8 +219,9 @@ return t && typeof t.toDate === 'function' ? t.toDate() : null;
 }
 
 // ---------------------------------------------------------
-// Last Visit, Total Spent and loyalty: all computed from the
-// customer's real PAID orders in Firestore. Nothing is made up.
+// Last Visit card: shows ONLY the most recent paid order
+// (its time, the items bought, how many items, and the bill).
+// Points and tier still use the total of all paid orders.
 // ---------------------------------------------------------
 async function loadVisitAndLoyalty(uid) {
 const visitEl = document.getElementById('last-visit-value');
@@ -234,35 +235,45 @@ const snap = await db.collection('sessions')
 .where('status', '==', 'paid')
 .get();
 
-let totalSpent = 0;
-let orderCount = 0;
-let latest = null;
+let lifetimeSpent = 0;      // all paid orders, used only for points / tier
+let lastOrder = null;       // the most recent paid order
+let lastTime = null;
 
 snap.forEach(doc => {
 const data = doc.data();
-totalSpent += Number(data.total) || 0;
-orderCount += 1;
+lifetimeSpent += Number(data.total) || 0;
 const t = orderTime(data);
-if (t && (!latest || t > latest)) latest = t;
+if (!lastOrder || (t && (!lastTime || t > lastTime))) {
+lastOrder = data;
+lastTime = t || lastTime;
+}
 });
 
-if (orderCount === 0) {
+if (!lastOrder) {
 visitEl.textContent = 'No visits yet';
 visitSub.textContent = 'Your first purchase will show here';
 spentEl.textContent = formatRupees(0);
-spentSub.textContent = 'No orders yet';
+spentSub.textContent = '0 items';
 } else {
-visitEl.textContent = latest ? formatVisit(latest) : 'Date unavailable';
-visitSub.textContent = 'Last completed purchase';
-spentEl.textContent = formatRupees(totalSpent);
-spentSub.textContent = `${orderCount} order${orderCount === 1 ? '' : 's'}`;
+const items = Array.isArray(lastOrder.items) ? lastOrder.items : [];
+const itemCount = items.reduce((sum, i) => sum + (Number(i.qty) || 0), 0);
+const bill = Number(lastOrder.total) ||
+items.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.qty) || 0), 0);
+const names = items
+.map(i => `${i.name}${(Number(i.qty) || 1) > 1 ? ' ×' + i.qty : ''}`)
+.join(', ');
+
+visitEl.textContent = lastTime ? formatVisit(lastTime) : 'Date unavailable';
+visitSub.textContent = names || 'Last completed purchase';
+spentEl.textContent = formatRupees(bill);
+spentSub.textContent = `${itemCount} item${itemCount === 1 ? '' : 's'}`;
 }
 
-// 1 point per ₹10 spent; simple tier thresholds
-const points = Math.floor(totalSpent / 10);
+// 1 point per ₹10 spent (all paid orders); simple tier thresholds
+const points = Math.floor(lifetimeSpent / 10);
 let tier = 'Bronze Tier';
-if (totalSpent >= 5000) tier = 'Gold Tier';
-else if (totalSpent >= 1500) tier = 'Silver Tier';
+if (lifetimeSpent >= 5000) tier = 'Gold Tier';
+else if (lifetimeSpent >= 1500) tier = 'Silver Tier';
 document.getElementById('loyalty-points').textContent = points.toLocaleString('en-IN');
 document.getElementById('loyalty-tier').textContent = tier;
 } catch (err) {
