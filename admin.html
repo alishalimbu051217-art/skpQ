@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0D9488">
+<title>SkpQ Admin</title>
+<style>
+  :root {
+    --teal: #0d9488; --teal-dark: #006b5f; --ink: #1c2b2a; --muted: #6b7a79;
+    --line: #d5dcdf; --bg: #f1f5f7; --err: #b3261e; --warn-bg: #fff3d6; --warn: #8a5a00;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background: var(--bg); color: var(--ink); min-height: 100vh; }
+  button { font-family: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #0b5a52; outline-offset: 2px; }
+  .hidden { display: none !important; }
+
+  /* Login */
+  .login { max-width: 400px; margin: 0 auto; padding: 56px 20px; }
+  .login h1 { color: var(--teal-dark); font-size: 30px; margin: 0 0 6px; }
+  .login p { color: var(--muted); margin: 0 0 24px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 22px; }
+  label { display: block; font-weight: 600; font-size: 14px; margin: 14px 0 6px; }
+  input[type=text], input[type=email], input[type=password], input[type=number], input[type=search] {
+    width: 100%; height: 48px; padding: 0 14px; font-size: 16px; font-family: inherit;
+    border: 1.5px solid #c3cccb; border-radius: 12px; background: #fff;
+  }
+  input:focus { border-color: var(--teal); outline: 0; }
+  .btn { height: 48px; padding: 0 20px; border: 0; border-radius: 12px; font-size: 15px; font-weight: 700; }
+  .btn.primary { background: var(--teal); color: #fff; }
+  .btn.ghost { background: #fff; color: var(--ink); border: 1.5px solid #c3cccb; }
+  .btn.danger { background: #fff; color: var(--err); border: 1.5px solid #e6b8b3; }
+  .btn.full { width: 100%; margin-top: 16px; }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .or { text-align: center; color: var(--muted); font-size: 13px; margin: 16px 0 0; }
+  .msg { font-size: 14px; color: var(--err); margin: 12px 0 0; min-height: 20px; word-break: break-word; }
+  .msg.ok { color: var(--teal-dark); }
+  .uid { display: block; margin: 10px 0; padding: 10px 12px; background: #eef3f2; border-radius: 10px;
+         font-family: ui-monospace, Consolas, monospace; font-size: 13px; word-break: break-all; }
+
+  /* Top bar */
+  header { position: sticky; top: 0; z-index: 5; background: #fff; border-bottom: 1px solid var(--line);
+           display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 60px; }
+  header h1 { margin: 0; font-size: 19px; color: var(--teal-dark); }
+  header .who { font-size: 13px; color: var(--muted); margin-right: 12px; }
+  header .right { display: flex; align-items: center; }
+  header .btn { height: 38px; padding: 0 14px; font-size: 14px; }
+
+  /* Products */
+  .wrap { max-width: 900px; margin: 0 auto; padding: 20px 20px 60px; }
+  .bar { display: flex; gap: 10px; margin-bottom: 14px; }
+  .bar input { flex: 1; }
+  .count { font-size: 14px; color: var(--muted); margin: 0 2px 12px; }
+  .item { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px;
+          margin-bottom: 10px; display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+  .item .info { min-width: 0; }
+  .item .name { font-weight: 700; font-size: 16px; overflow-wrap: anywhere; }
+  .item .meta { font-size: 13px; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
+  .item .price { font-weight: 700; color: var(--teal-dark); }
+  .item .acts { display: flex; gap: 8px; flex: none; }
+  .item .acts .btn { height: 38px; padding: 0 14px; font-size: 14px; }
+  .item.bad { border-color: #e8c97a; background: #fffaf0; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; background: var(--warn-bg); color: var(--warn);
+         padding: 3px 8px; border-radius: 999px; margin-top: 6px; }
+  .empty { text-align: center; color: var(--muted); padding: 30px 0; }
+  @media (max-width: 520px) { .item { flex-direction: column; align-items: stretch; } .item .acts .btn { flex: 1; } }
+
+  /* Dialog */
+  .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end;
+              justify-content: center; z-index: 20; }
+  .sheet { background: #fff; width: 100%; max-width: 480px; max-height: 92vh; overflow: auto;
+           border-radius: 24px 24px 0 0; padding: 22px 22px calc(22px + env(safe-area-inset-bottom, 0px)); }
+  @media (min-width: 560px) { .backdrop { align-items: center; } .sheet { border-radius: 24px; } }
+  .sheet h2 { margin: 0 0 4px; font-size: 20px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .sheet .btns { display: flex; gap: 10px; margin-top: 20px; }
+  .sheet .btns .btn { flex: 1; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login" id="login-view">
+  <h1>SkpQ Admin</h1>
+  <p>Owner access only.</p>
+  <div class="card">
+    <button class="btn ghost" id="google-btn" type="button" style="width:100%">Continue with Google</button>
+    <div class="or">or use email and password</div>
+    <label for="em">Email</label>
+    <input id="em" type="email" autocomplete="username">
+    <label for="pw">Password</label>
+    <input id="pw" type="password" autocomplete="current-password">
+    <button class="btn primary full" id="email-btn" type="button">Log in</button>
+    <div class="msg" id="login-msg" role="alert"></div>
+  </div>
+</div>
+
+<!-- NOT AN ADMIN -->
+<div class="login hidden" id="denied-view">
+  <h1>Not an admin yet</h1>
+  <p>This account is signed in, but it isn't on the admin list.</p>
+  <div class="card">
+    <div style="font-size:14px">If this is your owner account, copy this ID. It's needed to make you an admin in Firebase:</div>
+    <code class="uid" id="uid-text"></code>
+    <button class="btn ghost" id="copy-uid" type="button">Copy ID</button>
+    <button class="btn ghost" id="denied-out" type="button" style="margin-left:8px">Log out</button>
+    <div class="msg ok" id="copy-msg"></div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="hidden" id="admin-view">
+  <header>
+    <h1>SkpQ Admin</h1>
+    <div class="right">
+      <span class="who" id="who"></span>
+      <button class="btn ghost" id="logout-btn" type="button">Log out</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="bar">
+      <input type="search" id="search" placeholder="Search by name, barcode or category" aria-label="Search products">
+      <button class="btn primary" id="add-btn" type="button">Add product</button>
+    </div>
+    <div class="count" id="count"></div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<!-- ADD / EDIT DIALOG -->
+<div class="backdrop hidden" id="dlg">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+    <h2 id="dlg-title">Add product</h2>
+    <label for="f-code">Barcode</label>
+    <input id="f-code" type="text" inputmode="numeric" maxlength="14" autocomplete="off">
+    <div class="hint" id="code-hint">8 to 14 digits, exactly as printed under the barcode.</div>
+    <label for="f-name">Name</label>
+    <input id="f-name" type="text" autocomplete="off">
+    <label for="f-cat">Category</label>
+    <input id="f-cat" type="text" list="cats" autocomplete="off">
+    <datalist id="cats"></datalist>
+    <div class="row2">
+      <div><label for="f-price">Price (₹)</label><input id="f-price" type="number" inputmode="decimal" min="0" step="0.01"></div>
+      <div><label for="f-wt">Weight (grams)</label><input id="f-wt" type="number" inputmode="numeric" min="0" step="1"></div>
+    </div>
+    <div class="msg" id="f-msg" role="alert"></div>
+    <div class="btns">
+      <button class="btn ghost" id="f-cancel" type="button">Cancel</button>
+      <button class="btn primary" id="f-save" type="button">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const show = (id, on) => $(id).classList.toggle('hidden', !on);
+
+  // ------------------------------------------------------
+  // Login
+  // ------------------------------------------------------
+  function loginError(err) {
+    const wrong = ['auth/invalid-credential', 'auth/wrong-password', 'auth/user-not-found', 'auth/invalid-login-credentials'];
+    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return '';
+    return wrong.includes(err.code) ? 'Wrong email or password.' : 'Could not log in (' + (err.code || err.message) + ').';
+  }
+  $('google-btn').addEventListener('click', async () => {
+    $('login-msg').textContent = '';
+    try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+    catch (e) { $('login-msg').textContent = loginError(e); }
+  });
+  async function emailLogin() {
+    $('login-msg').textContent = '';
+    const em = $('em').value.trim(), pw = $('pw').value;
+    if (!em || !pw) { $('login-msg').textContent = 'Enter your email and password.'; return; }
+    $('email-btn').disabled = true;
+    try { await auth.signInWithEmailAndPassword(em, pw); }
+    catch (e) { $('login-msg').textContent = loginError(e); }
+    finally { $('email-btn').disabled = false; }
+  }
+  $('email-btn').addEventListener('click', emailLogin);
+  $('pw').addEventListener('keydown', e => { if (e.key === 'Enter') emailLogin(); });
+
+  const logout = () => auth.signOut();
+  $('logout-btn').addEventListener('click', logout);
+  $('denied-out').addEventListener('click', logout);
+
+  $('copy-uid').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('uid-text').textContent); $('copy-msg').textContent = 'Copied.'; }
+    catch (e) { $('copy-msg').textContent = 'Select the ID and copy it by hand.'; }
+  });
+
+  // ------------------------------------------------------
+  // Admin check: a document admins/{uid} must exist
+  // ------------------------------------------------------
+  auth.onAuthStateChanged(async user => {
+    if (!user) { show('login-view', true); show('denied-view', false); show('admin-view', false); return; }
+    show('login-view', false);
+    let isAdmin = false;
+    try { isAdmin = (await db.collection('admins').doc(user.uid).get()).exists; }
+    catch (e) { isAdmin = false; }
+    if (!isAdmin) {
+      $('uid-text').textContent = user.uid;
+      show('denied-view', true); show('admin-view', false);
+      return;
+    }
+    show('denied-view', false); show('admin-view', true);
+    $('who').textContent = user.email || '';
+    loadProducts();
+  });
+
+  // ------------------------------------------------------
+  // Products
+  // ------------------------------------------------------
+  let products = [];   // [{id, name, category, price, weightGrams}]
+  const VALID_CODE = /^\d{8,14}$/;
+  const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+
+  async function loadProducts() {
+    $('count').textContent = 'Loading products...';
+    try {
+      const snap = await db.collection('products').get();
+      products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      products.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      render();
+    } catch (e) {
+      $('count').textContent = 'Could not load products (' + (e.code || e.message) + ').';
+    }
+  }
+
+  function render() {
+    const q = $('search').value.trim().toLowerCase();
+    const rows = products.filter(p =>
+      !q || [p.id, p.name, p.category].some(v => String(v || '').toLowerCase().includes(q)));
+    const bad = products.filter(p => !VALID_CODE.test(p.id)).length;
+    $('count').textContent = rows.length + ' of ' + products.length + ' products' +
+      (bad ? ' · ' + bad + ' with a broken barcode' : '');
+
+    const list = $('list');
+    list.innerHTML = '';
+    if (!rows.length) { list.innerHTML = '<div class="empty">No products found.</div>'; }
+    rows.forEach(p => {
+      const el = document.createElement('div');
+      const broken = !VALID_CODE.test(p.id);
+      el.className = 'item' + (broken ? ' bad' : '');
+      el.innerHTML = '<div class="info"><div class="name"></div><div class="meta"></div></div>' +
+                     '<div class="acts"><button class="btn ghost" data-a="edit" type="button">Edit</button>' +
+                     '<button class="btn danger" data-a="del" type="button">Delete</button></div>';
+      el.querySelector('.name').textContent = p.name || '(no name)';
+      const meta = el.querySelector('.meta');
+      meta.innerHTML = '<span class="price"></span> · <span class="rest"></span>';
+      meta.querySelector('.price').textContent = inr(p.price);
+      meta.querySelector('.rest').textContent =
+        (p.weightGrams != null ? p.weightGrams + ' g' : 'no weight') + ' · ' + (p.category || 'no category') + ' · ' + p.id;
+      if (broken) {
+        const t = document.createElement('div');
+        t.className = 'tag';
+        t.textContent = 'Broken barcode. Delete this entry.';
+        el.querySelector('.info').appendChild(t);
+      }
+      el.querySelector('[data-a=edit]').addEventListener('click', () => openDialog(p));
+      el.querySelector('[data-a=del]').addEventListener('click', () => removeProduct(p));
+      list.appendChild(el);
+    });
+  }
+  $('search').addEventListener('input', render);
+
+  async function removeProduct(p) {
+    if (!confirm('Delete "' + (p.name || p.id) + '"? This cannot be undone.')) return;
+    try {
+      await db.collection('products').doc(p.id).delete();
+      products = products.filter(x => x.id !== p.id);
+      render();
+    } catch (e) { alert('Could not delete (' + (e.code || e.message) + ').'); }
+  }
+
+  // ------------------------------------------------------
+  // Add / edit dialog
+  // ------------------------------------------------------
+  let editingId = null;
+  function openDialog(p) {
+    editingId = p ? p.id : null;
+    $('dlg-title').textContent = p ? 'Edit product' : 'Add product';
+    $('f-code').value = p ? p.id : '';
+    $('f-code').disabled = !!p;
+    $('code-hint').textContent = p ? 'The barcode cannot be changed. To fix it, delete this product and add it again.'
+                                   : '8 to 14 digits, exactly as printed under the barcode.';
+    $('f-name').value = p ? (p.name || '') : '';
+    $('f-cat').value = p ? (p.category || '') : '';
+    $('f-price').value = p && p.price != null ? p.price : '';
+    $('f-wt').value = p && p.weightGrams != null ? p.weightGrams : '';
+    $('f-msg').textContent = '';
+    const cats = [...new Set(products.map(x => x.category).filter(Boolean))].sort();
+    $('cats').innerHTML = '';
+    cats.forEach(c => { const o = document.createElement('option'); o.value = c; $('cats').appendChild(o); });
+    show('dlg', true);
+    (p ? $('f-name') : $('f-code')).focus();
+  }
+  const closeDialog = () => show('dlg', false);
+  $('add-btn').addEventListener('click', () => openDialog(null));
+  $('f-cancel').addEventListener('click', closeDialog);
+  $('dlg').addEventListener('click', e => { if (e.target === $('dlg')) closeDialog(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDialog(); });
+  $('f-code').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
+
+  $('f-save').addEventListener('click', async () => {
+    const msg = $('f-msg');
+    const code = $('f-code').value.trim();
+    const name = $('f-name').value.trim();
+    const category = $('f-cat').value.trim();
+    const price = parseFloat($('f-price').value);
+    const wt = parseInt($('f-wt').value, 10);
+
+    if (!editingId && !VALID_CODE.test(code)) { msg.textContent = 'Barcode must be 8 to 14 digits.'; return; }
+    if (!name) { msg.textContent = 'Enter the product name.'; return; }
+    if (!category) { msg.textContent = 'Enter a category.'; return; }
+    if (!(price >= 0)) { msg.textContent = 'Enter a valid price.'; return; }
+    if (!(wt > 0)) { msg.textContent = 'Enter the pack weight in grams. Staff use it to check the order.'; return; }
+
+    const id = editingId || code;
+    if (!editingId && products.some(p => p.id === id)) {
+      msg.textContent = 'This barcode already exists. Edit that product instead.'; return;
+    }
+    $('f-save').disabled = true; msg.textContent = '';
+    try {
+      await db.collection('products').doc(id).set({ name, category, price, weightGrams: wt });
+      const rec = { id, name, category, price, weightGrams: wt };
+      const i = products.findIndex(p => p.id === id);
+      if (i >= 0) products[i] = rec; else products.push(rec);
+      products.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      closeDialog(); render();
+    } catch (e) {
+      msg.textContent = 'Could not save (' + (e.code || e.message) + ').';
+    } finally { $('f-save').disabled = false; }
+  });
+</script>
+</body>
+</html>
