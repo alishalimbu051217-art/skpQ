@@ -1,218 +1,143 @@
 <!DOCTYPE html>
-
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
-<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SkpQ Staff - Login</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0D9488">
-<link rel="icon" href="icons/favicon-32.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SkpQ">
-<script src="js/pwa.js" defer></script>
-<link rel="stylesheet" href="css/tailwind.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<title>SkpQ Staff Portal - Login</title>
 <style>
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .employee-input:focus-within {
-            border-color: #0D9488;
-            box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
-        }
-    </style>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/firebase-config.js"></script>
-<script src="js/cart.js"></script>
+  :root {
+    --teal: #0d9488;
+    --teal-dark: #006b5f;
+    --ink: #1c2b2a;
+    --muted: #6b7a79;
+    --line: #b9c4c3;
+    --bg: #eef3f6;
+    --err: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(180deg, #e6edf2 0%, #f5f8fb 100%);
+    color: var(--ink);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 0 20px env(safe-area-inset-bottom, 0);
+    min-height: 100vh;
+  }
+  .badge {
+    width: 84px; height: 84px; background: var(--teal-dark);
+    border-radius: 0 0 22px 22px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 20px rgba(0,107,95,.25);
+  }
+  .badge svg { width: 38px; height: 38px; }
+  h1 { color: var(--teal-dark); font-size: 32px; margin: 36px 0 6px; text-align: center; }
+  .sub { color: var(--ink); font-size: 16px; margin: 0 0 32px; text-align: center; }
+  .card {
+    width: 100%; max-width: 420px; background: #fff; border: 1px solid #d5dcdf;
+    border-radius: 32px; padding: 28px 22px 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.06);
+  }
+  label { display: block; font-weight: 600; font-size: 16px; margin: 0 0 10px 4px; color: #2b3a39; }
+  .field {
+    display: flex; align-items: center; gap: 10px;
+    border: 1.5px solid var(--line); border-radius: 24px; padding: 0 16px; height: 64px;
+    background: #fff;
+  }
+  .field:focus-within { border-color: var(--teal); box-shadow: 0 0 0 4px rgba(13,148,136,.15); }
+  .field svg { width: 24px; height: 24px; flex: none; }
+  #pin {
+    flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+    font-size: 26px; letter-spacing: 10px; color: var(--ink); text-align: center;
+    font-family: inherit;
+  }
+  #pin::placeholder { letter-spacing: 0; font-size: 17px; color: #9aa7a6; }
+  .eye { border: 0; background: none; padding: 6px; cursor: pointer; display: flex; }
+  .hint { font-size: 14px; color: var(--muted); margin: 12px 4px 0; }
+  .msg { min-height: 22px; font-size: 14px; margin: 12px 4px 0; color: var(--err); }
+  button.go {
+    width: 100%; height: 64px; margin-top: 10px; border: 0; border-radius: 24px;
+    background: var(--teal); color: #fff; font-size: 19px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 6px 14px rgba(13,148,136,.3);
+  }
+  button.go:disabled { opacity: .6; cursor: default; }
+  button:focus-visible { outline: 3px solid #0b5a52; outline-offset: 2px; }
+  .foot { color: var(--muted); font-size: 14px; text-align: center; max-width: 340px; margin: 32px 0 24px; line-height: 1.5; }
+</style>
 </head>
-<body class="bg-background text-on-surface min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
-<!-- Background Decorative Element (Subtle & Professional) -->
-<div class="absolute inset-0 z-0 opacity-10 pointer-events-none">
-<div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-primary blur-[120px]"></div>
-<div class="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full bg-secondary blur-[100px]"></div>
-</div>
-<!-- Main Container -->
-<main class="z-10 w-full max-w-md px-container-padding flex flex-col gap-xl">
-<!-- Header / Branding Section -->
-<header class="text-center flex flex-col items-center gap-sm">
-<div class="w-16 h-16 bg-primary rounded-xl flex items-center justify-center mb-md shadow-lg">
-<span class="material-symbols-outlined text-white text-[32px]">shield_person</span>
-</div>
-<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary tracking-tight">
-                SkpQ Staff
-            </h1>
-<p class="font-body-md text-body-md text-on-surface-variant">
-                Inventory &amp; Logistics Management Portal
-            </p>
-</header>
-<!-- Login Form Card -->
-<section class="bg-surface-container-lowest border border-outline-variant p-lg rounded-[24px] shadow-[0px_4px_20px_rgba(0,0,0,0.05)]">
-<form action="#" class="flex flex-col gap-md" method="POST" onsubmit="event.preventDefault();">
-<!-- Email Field -->
-<div class="flex flex-col gap-xs">
-<label class="font-label-md text-label-md text-on-surface-variant px-1" for="company-email">Company Email</label>
-<div class="employee-input flex items-center gap-md border border-outline rounded-[16px] px-md py-3 transition-all">
-<span class="material-symbols-outlined text-on-surface-variant">mail</span>
-<input class="bg-transparent border-none outline-none w-full font-body-md text-on-surface placeholder:text-outline" id="company-email" name="email" placeholder="name@skpq.com" required="" type="email"/>
-</div>
-</div>
-<!-- Password Field -->
-<div class="flex flex-col gap-xs">
-<label class="font-label-md text-label-md text-on-surface-variant px-1" for="password">Password</label>
-<div class="employee-input flex items-center gap-md border border-outline rounded-[16px] px-md py-3 transition-all">
-<span class="material-symbols-outlined text-on-surface-variant">lock</span>
-<input class="bg-transparent border-none outline-none w-full font-body-md text-on-surface placeholder:text-outline" id="password" name="password" placeholder="••••••••" required="" type="password"/>
-<button class="text-on-surface-variant hover:text-primary transition-colors" type="button">
-<span class="material-symbols-outlined">visibility</span>
-</button>
-</div>
-</div>
-<!-- Remember Me & Forgot Password -->
-<div class="flex justify-between items-center px-1 mb-sm">
-<label class="flex items-center gap-sm cursor-pointer group">
-<input class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox"/>
-<span class="font-label-sm text-label-sm text-on-surface-variant group-hover:text-on-surface">Remember session</span>
-</label>
-<a class="font-label-sm text-label-sm text-primary hover:underline font-semibold" href="#" id="forgot-password-link">Forgot password?</a>
-</div>
-<!-- Submit Button -->
-<button class="bg-[#0D9488] hover:bg-[#0b7a6f] active:scale-95 text-white font-label-md text-label-md py-4 rounded-[16px] transition-all flex items-center justify-center gap-sm shadow-md mt-sm" type="submit">
-<span>Login</span>
-<span class="material-symbols-outlined text-[20px]">login</span>
-</button>
-</form>
-</section>
-<!-- Footer / Utilitarian Metadata -->
-<footer class="flex flex-col items-center gap-md">
-<div class="flex items-center gap-md">
-<span class="h-[1px] w-12 bg-outline-variant"></span>
-<span class="font-label-sm text-label-sm text-outline">v2.4.1 Build-Release</span>
-<span class="h-[1px] w-12 bg-outline-variant"></span>
-</div>
-<div class="grid grid-cols-2 gap-sm w-full">
-<button class="border-2 border-outline hover:bg-surface-variant font-label-sm text-label-sm text-on-surface px-md py-3 rounded-lg flex items-center justify-center gap-sm transition-colors" onclick="window.location.href='support.html'">
-<span class="material-symbols-outlined text-[18px]">support_agent</span>
-                    IT Support
-                </button>
-<button class="border-2 border-outline hover:bg-surface-variant font-label-sm text-label-sm text-on-surface px-md py-3 rounded-lg flex items-center justify-center gap-sm transition-colors" onclick="window.location.href='support.html'">
-<span class="material-symbols-outlined text-[18px]">qr_code_scanner</span>
-                    Scan ID
-                </button>
-</div>
-<p class="font-label-sm text-label-sm text-on-surface-variant opacity-60 text-center mt-md">
-                Authorized Personnel Only. All activities are logged under internal security protocols.
-            </p>
-</footer>
-</main>
-<!-- Side Graphic for Desktop (Asymmetric Layout) -->
-<div class="hidden lg:block fixed right-0 top-0 h-full w-1/3 bg-surface-container overflow-hidden border-l border-outline-variant">
-<div class="h-full w-full relative flex items-center justify-center p-xl">
-<div class="absolute inset-0 z-0 overflow-hidden">
-<div class="absolute top-1/4 left-1/4 w-[600px] h-[600px] border border-primary/10 rounded-full animate-pulse"></div>
-<div class="absolute top-1/3 left-1/3 w-[400px] h-[400px] border border-primary/5 rounded-full animate-pulse [animation-delay:1s]"></div>
-</div>
-<div class="relative z-10 flex flex-col gap-lg">
-<div class="bg-surface-container-lowest p-lg rounded-xl shadow-xl border border-outline-variant transform rotate-2 max-w-sm">
-<div class="flex items-center gap-md mb-md">
-<span class="material-symbols-outlined text-primary" data-weight="fill">analytics</span>
-<h3 class="font-title-md text-title-md text-on-surface">Real-time Metrics</h3>
-</div>
-<div class="space-y-sm">
-<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
-<div class="h-full bg-primary w-[75%]"></div>
-</div>
-<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
-<div class="h-full bg-secondary w-[45%]"></div>
-</div>
-<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
-<div class="h-full bg-primary-container w-[90%]"></div>
-</div>
-</div>
-</div>
-<div class="bg-surface-container-lowest p-lg rounded-xl shadow-xl border border-outline-variant transform -rotate-2 ml-md max-w-sm">
-<div class="flex items-center gap-md mb-md">
-<span class="material-symbols-outlined text-secondary" data-weight="fill">inventory_2</span>
-<h3 class="font-title-md text-title-md text-on-surface">Stock Control</h3>
-</div>
-<p class="font-body-md text-body-md text-on-surface-variant">
-                        Securely manage 250,000+ SKUs with SkpQ's advanced proprietary ledger system.
-                    </p>
-</div>
-</div>
-</div>
-</div>
-<!-- Interaction Script -->
-<script>
-        // Simple password visibility toggle
-        const toggleBtn = document.querySelector('button[type="button"]');
-        const passwordInput = document.getElementById('password');
-        const visibilityIcon = toggleBtn.querySelector('span');
+<body>
 
-        toggleBtn.addEventListener('click', () => {
-            const isPassword = passwordInput.type === 'password';
-            passwordInput.type = isPassword ? 'text' : 'password';
-            visibilityIcon.textContent = isPassword ? 'visibility_off' : 'visibility';
-        });
+<div class="badge" aria-hidden="true">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><circle cx="12" cy="10" r="2.2"/><path d="M8.5 16c.8-1.6 2-2.4 3.5-2.4s2.7.8 3.5 2.4"/></svg>
+</div>
 
-        // Simple haptic-like feedback on submit
-        // Put your staff login email(s) here, in lowercase, e.g. ['staff@skpq.com']
-        const STAFF_EMAILS = [];
+<h1>SkpQ Staff</h1>
+<p class="sub">Inventory &amp; Logistics Management Portal</p>
 
-        const form = document.querySelector('form');
+<div class="card">
+  <label for="pin">Enter PIN</label>
+  <div class="field">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#1c2b2a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    <input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+           autocomplete="off" placeholder="6-digit PIN" aria-describedby="msg">
+    <button class="eye" id="eye" type="button" aria-label="Show PIN">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1c2b2a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+  </div>
+  <div class="msg" id="msg" role="alert"></div>
+  <button class="go" id="go" type="button">Login</button>
+</div>
 
-        document.getElementById('forgot-password-link').addEventListener('click', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('company-email').value.trim();
-            if (!email) {
-                alert('Enter your company email above first, then tap "Forgot password?" again.');
-                return;
-            }
-            try {
-                await auth.sendPasswordResetEmail(email);
-                alert(`Password reset email sent to ${email}. Check your inbox.`);
-            } catch (err) {
-                console.error(err);
-                alert('Could not send reset email: ' + err.message);
-            }
-        });
+<p class="foot">Authorized personnel only. All activities are logged under internal security protocols.</p>
 
-        form.addEventListener('submit', async () => {
-            const btn = form.querySelector('button[type="submit"]');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = `<span>Signing in...</span><span class="material-symbols-outlined animate-spin">sync</span>`;
-            btn.classList.add('opacity-80');
-            btn.disabled = true;
+<script type="module">
+  import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { auth } from "./js/firebase-config.js";
 
-            const email = document.getElementById('company-email').value.trim();
-            const password = document.getElementById('password').value;
+  // Hidden staff account. Created in Firebase Console > Authentication > Users.
+  const STAFF_EMAIL = "staff@skpq.app";
+  const NEXT_PAGE = "employee-home.html";
 
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                // Only allow listed staff emails (leave STAFF_EMAILS empty to allow any account)
-                if (STAFF_EMAILS.length && !STAFF_EMAILS.includes(email.toLowerCase())) {
-                    await auth.signOut();
-                    throw new Error('This account is not a staff account.');
-                }
-                // Mark this browser session as an employee session
-                localStorage.setItem('skpq_role', 'employee');
-                window.location.href = 'employee-home.html';
-            } catch (err) {
-                console.error(err);
-                alert('Login failed: ' + err.message);
-                btn.innerHTML = originalHTML;
-                btn.classList.remove('opacity-80');
-                btn.disabled = false;
-            }
-        });
-    </script>
-</body></html>
+  const pin = document.getElementById("pin");
+  const go = document.getElementById("go");
+  const msg = document.getElementById("msg");
+  const eye = document.getElementById("eye");
+
+  // Keep digits only (also handles paste)
+  pin.addEventListener("input", () => {
+    pin.value = pin.value.replace(/\D/g, "").slice(0, 6);
+    msg.textContent = "";
+    if (pin.value.length === 6) login();
+  });
+
+  eye.addEventListener("click", () => {
+    const show = pin.type === "password";
+    pin.type = show ? "text" : "password";
+    eye.setAttribute("aria-label", show ? "Hide PIN" : "Show PIN");
+  });
+
+  go.addEventListener("click", login);
+  pin.addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+
+  let busy = false;
+  async function login() {
+    if (busy) return;
+    if (pin.value.length !== 6) { msg.textContent = "Enter your 6-digit PIN."; return; }
+    busy = true; go.disabled = true; go.textContent = "Checking...";
+    try {
+      await signInWithEmailAndPassword(auth, STAFF_EMAIL, pin.value);
+      location.href = NEXT_PAGE;
+    } catch (err) {
+      const wrong = ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-login-credentials"];
+      msg.textContent = wrong.includes(err.code)
+        ? "Wrong PIN. Try again."
+        : "Could not log in (" + (err.code || err.message) + ").";
+      pin.value = ""; pin.focus();
+    } finally {
+      busy = false; go.disabled = false; go.textContent = "Login";
+    }
+  }
+  pin.focus();
+</script>
+</body>
+</html>
