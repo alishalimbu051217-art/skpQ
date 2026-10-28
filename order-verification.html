@@ -5,7 +5,7 @@
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0D9488">
 <link rel="icon" href="icons/favicon-32.png">
@@ -14,34 +14,25 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SkpQ">
 <script src="js/pwa.js" defer></script>
+<title>SkpQ - Verify Order</title>
 <link rel="stylesheet" href="css/tailwind.css">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        body { font-family: 'Inter', sans-serif; }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
-        }
-        .bento-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 16px;
-        }
-        @media (max-width: 768px) {
-            .bento-grid { grid-template-columns: 1fr; }
-        }
-    </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
-  </style>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Scale card: padding that suits a phone, and a weight box that shrinks to fit */
+    .scale-card { padding: 22px; }
+    @media (min-width: 768px) { .scale-card { padding: 32px; } }
+    .weight-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+    .weight-row button { flex: none; }
+    #weightInput { flex: 1 1 auto; width: 1%; min-width: 0; font-size: 28px; }
+
+    #verify-btn:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+    #reject-btn:disabled { opacity: .4; cursor: not-allowed; }
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="js/firebase-config.js"></script>
@@ -51,12 +42,13 @@
 <!-- Top Navigation -->
 <header class="flex justify-between items-center px-gutter w-full h-16 sticky top-0 z-50 bg-surface border-b border-outline-variant">
 <div class="flex items-center gap-4">
-<button class="material-symbols-outlined text-primary hover:bg-primary-container/10 p-2 rounded-full transition-colors" onclick="window.location.href='employee-dashboard.html'">arrow_back</button>
+<button class="material-symbols-outlined text-primary hover:bg-primary-container/10 p-2 rounded-full transition-colors" onclick="window.location.href='employee-dashboard.html'" aria-label="Back">arrow_back</button>
 <h1 class="font-title-md text-title-md text-primary font-black tracking-tight">SkpQ</h1>
 </div>
 <div class="flex items-center gap-3">
-<span class="text-label-sm font-label-sm text-on-surface-variant bg-surface-container px-3 py-1 rounded-full">Station #42</span>
-<div class="w-10 h-10 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed font-bold">JD</div>
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center border-2 border-primary">
+<span class="material-symbols-outlined text-on-primary-container">person</span>
+</div>
 </div>
 </header>
 <main class="max-w-[1440px] mx-auto p-gutter space-y-6">
@@ -83,222 +75,258 @@
 </div>
 </div>
 </section>
-<!-- Main Content Grid -->
-<div class="bento-grid">
-<!-- Items Checklist (Col Span 8) -->
-<div class="col-span-12 md:col-span-8 space-y-4">
+
+<!-- Items checklist -->
 <div class="bg-surface-container-lowest p-6 rounded-[24px] shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant">
 <h3 class="font-title-md text-title-md text-on-surface mb-6 flex items-center gap-2">
 <span class="material-symbols-outlined">checklist</span>
-                        Item Inventory
-                    </h3>
+Item Inventory
+</h3>
 <div class="space-y-3" id="items-checklist"></div>
 </div>
-</div>
-</div>
-<!-- Verification Controls (Col Span 4) -->
-<div class="col-span-12 md:col-span-4 space-y-4">
-<div class="bg-surface-container p-8 rounded-[24px] border-2 border-primary shadow-lg sticky top-24">
+
+<!-- Verification Controls -->
+<div class="scale-card bg-surface-container rounded-[24px] border-2 border-primary shadow-lg">
 <h3 class="font-title-md text-title-md text-primary mb-6">Scale Verification</h3>
 <div class="space-y-6">
 <!-- Weight Input -->
 <div>
-<label class="font-label-md text-label-md text-on-surface-variant mb-2 block">Actual Weight Verified (kg)</label>
-<div class="flex items-center gap-2">
-<button class="w-12 h-14 bg-white border border-outline-variant rounded-xl flex items-center justify-center active:scale-95 transition-transform" onclick="decrementWeight()">
+<label class="font-label-md text-label-md text-on-surface-variant mb-2 block" for="weightInput">Actual Weight Verified (kg)</label>
+<div class="weight-row">
+<button class="w-12 h-14 bg-white border border-outline-variant rounded-xl flex items-center justify-center active:scale-95 transition-transform" onclick="decrementWeight()" type="button" aria-label="Decrease weight">
 <span class="material-symbols-outlined">remove</span>
 </button>
-<input class="flex-1 h-14 bg-white border border-outline-variant rounded-xl text-center text-headline-lg font-bold text-on-surface focus:ring-2 focus:ring-primary focus:border-transparent outline-none" id="weightInput" step="0.1" type="number" value="0.0"/>
-<button class="w-12 h-14 bg-white border border-outline-variant rounded-xl flex items-center justify-center active:scale-95 transition-transform" onclick="incrementWeight()">
+<input class="h-14 bg-white border border-outline-variant rounded-xl text-center font-bold text-on-surface focus:ring-2 focus:ring-primary focus:border-transparent outline-none" id="weightInput" inputmode="decimal" min="0" step="any" type="number" placeholder="0.00"/>
+<button class="w-12 h-14 bg-white border border-outline-variant rounded-xl flex items-center justify-center active:scale-95 transition-transform" onclick="incrementWeight()" type="button" aria-label="Increase weight">
 <span class="material-symbols-outlined">add</span>
 </button>
 </div>
 </div>
 <!-- Status Chip -->
-<div class="p-4 rounded-xl bg-surface-container-high border border-outline-variant flex items-center gap-3 transition-colors" id="weightStatus">
-<div class="w-3 h-3 rounded-full bg-tertiary" id="statusDot"></div>
+<div class="p-4 rounded-xl bg-surface-container-high border border-outline-variant flex items-center gap-3 transition-colors" id="weightStatus" role="status">
+<div class="w-3 h-3 rounded-full bg-tertiary flex-none" id="statusDot"></div>
 <span class="font-label-md text-label-md text-on-surface-variant" id="statusText">Awaiting input...</span>
 </div>
 <div class="pt-4 space-y-3">
-<!-- Verified Button -->
-<button class="w-full h-14 bg-secondary text-on-secondary rounded-xl font-title-md flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-md" id="verify-btn">
+<button class="w-full h-14 bg-secondary text-on-secondary rounded-xl font-title-md flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-md" id="verify-btn" type="button" disabled>
 <span class="material-symbols-outlined">check_circle</span>
-                                Verified
-                            </button>
-<!-- Reject Button -->
-<button class="w-full h-14 border-2 border-error text-error rounded-xl font-label-md flex items-center justify-center gap-2 hover:bg-error/5 active:scale-95 transition-all" id="reject-btn">
+Verified
+</button>
+<button class="w-full h-14 border-2 border-error text-error rounded-xl font-label-md flex items-center justify-center gap-2 hover:bg-error/5 active:scale-95 transition-all" id="reject-btn" type="button">
 <span class="material-symbols-outlined">close</span>
-                                Reject Order
-                            </button>
+Reject Order
+</button>
 </div>
 </div>
 <div class="mt-8 pt-6 border-t border-outline-variant">
 <p class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-2">
 <span class="material-symbols-outlined text-[16px]">info</span>
-                            Tolerance allowed: ± 0.15kg
-                        </p>
-</div>
-</div>
+<span id="tolerance-note">Verified unlocks when the weight is within the allowed difference.</span>
+</p>
 </div>
 </div>
 </main>
+
 <!-- Bottom Nav (Mobile Only) -->
-<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container rounded-t-xl shadow-[0px_-4px_20px_rgba(0,0,0,0.05)]">
-<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
-<span class="material-symbols-outlined">home</span>
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface-container rounded-t-xl shadow-[0px_-4px_20px_rgba(0,0,0,0.05)]" style="padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1" href="employee-home.html">
+<span class="material-symbols-outlined">dashboard</span>
 <span class="text-label-sm font-label-sm">Home</span>
-</div>
-<div class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-xl px-4 py-1">
-<span class="material-symbols-outlined">barcode_scanner</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-xl px-6 py-1" href="employee-dashboard.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">barcode_scanner</span>
 <span class="text-label-sm font-label-sm">Scan</span>
-</div>
-<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
-<span class="material-symbols-outlined">person</span>
-<span class="text-label-sm font-label-sm">Profile</span>
-</div>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1" href="support.html">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="text-label-sm font-label-sm">Support</span>
+</a>
 </nav>
+
 <script>
-        // ---------------------------------------------------------
-        // Require an employee session
-        // ---------------------------------------------------------
-        auth.onAuthStateChanged(user => {
-            if (!user || localStorage.getItem('skpq_role') !== 'employee') {
-                window.location.href = 'employee-login.html';
-            }
-        });
+    // ---------------------------------------------------------
+    // Require an employee session
+    // ---------------------------------------------------------
+    auth.onAuthStateChanged(user => {
+        if (!user || localStorage.getItem('skpq_role') !== 'employee') {
+            window.location.href = 'employee-login.html';
+        }
+    });
 
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get('token');
-        let sessionData = null;
-        let expectedWeightGrams = 0;
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    let sessionData = null;
+    let expectedWeightGrams = 0;
+    let orderLocked = false;   // true when the order was already verified / rejected
 
-        if (!token) {
-            alert('No order token specified.');
+    if (!token) {
+        alert('No order token specified.');
+        window.location.href = 'employee-dashboard.html';
+    }
+
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    function formatWeight(grams) {
+        if (!grams) return 'not set';
+        return grams >= 1000 ? `${(grams / 1000).toFixed(2)} kg` : `${grams} g`;
+    }
+
+    // Allowed difference between the scale and the expected weight: 5%, at least 30 g
+    function toleranceGrams() {
+        return Math.max(30, expectedWeightGrams * 0.05);
+    }
+
+    const weightInput = document.getElementById('weightInput');
+    const weightStatus = document.getElementById('weightStatus');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const verifyBtn = document.getElementById('verify-btn');
+    const rejectBtn = document.getElementById('reject-btn');
+
+    async function loadOrder() {
+        const doc = await db.collection('sessions').doc(token).get();
+        if (!doc.exists) {
+            alert('Order not found for token ' + token);
             window.location.href = 'employee-dashboard.html';
+            return;
+        }
+        sessionData = doc.data();
+
+        document.getElementById('order-token-label').textContent = `Order #${token}`;
+        document.getElementById('customer-name').textContent = sessionData.customerName || 'Customer';
+        const items = sessionData.items || [];
+        const totalQty = items.reduce((s, i) => s + i.qty, 0);
+        document.getElementById('expected-total').textContent = `${totalQty} item${totalQty === 1 ? '' : 's'} • ₹${(sessionData.total || 0).toFixed(2)}`;
+
+        // Fall back to summing item weights for sessions created before
+        // totalWeightGrams was added to the checkout doc.
+        expectedWeightGrams = sessionData.totalWeightGrams
+            ?? items.reduce((s, i) => s + (i.weightGrams || 0) * i.qty, 0);
+        document.getElementById('expected-weight').textContent = formatWeight(expectedWeightGrams);
+
+        if (expectedWeightGrams) {
+            document.getElementById('tolerance-note').textContent =
+                `Allowed difference: ± ${Math.round(toleranceGrams())} g. Verified unlocks when the weight matches.`;
         }
 
-        function formatWeight(grams) {
-            if (!grams) return 'not set';
-            return grams >= 1000 ? `${(grams / 1000).toFixed(2)} kg` : `${grams} g`;
-        }
-
-        async function loadOrder() {
-            const doc = await db.collection('sessions').doc(token).get();
-            if (!doc.exists) {
-                alert('Order not found for token ' + token);
-                window.location.href = 'employee-dashboard.html';
-                return;
-            }
-            sessionData = doc.data();
-
-            document.getElementById('order-token-label').textContent = `Order #${token}`;
-            document.getElementById('customer-name').textContent = sessionData.customerName || 'Customer';
-            const items = sessionData.items || [];
-            const totalQty = items.reduce((s, i) => s + i.qty, 0);
-            document.getElementById('expected-total').textContent = `${totalQty} item${totalQty === 1 ? '' : 's'} • ₹${(sessionData.total || 0).toFixed(2)}`;
-
-            // Fall back to summing item weights for sessions created before
-            // totalWeightGrams was added to the checkout doc.
-            expectedWeightGrams = sessionData.totalWeightGrams
-                ?? items.reduce((s, i) => s + (i.weightGrams || 0) * i.qty, 0);
-            document.getElementById('expected-weight').textContent = formatWeight(expectedWeightGrams);
-
-            document.getElementById('items-checklist').innerHTML = items.map(i => `
-                <div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl border border-transparent">
-                    <div>
-                        <h4 class="font-body-md text-body-md font-bold">${i.name}</h4>
-                        <p class="font-label-sm text-label-sm text-on-surface-variant">Qty: ${i.qty} • ${formatWeight(i.weightGrams)} each</p>
-                    </div>
-                    <p class="font-body-md text-body-md font-bold text-on-surface">₹${(i.price * i.qty).toFixed(2)}</p>
+        document.getElementById('items-checklist').innerHTML = items.map(i => `
+            <div class="flex items-center justify-between gap-3 p-4 bg-surface-container-low rounded-xl border border-transparent">
+                <div class="min-w-0">
+                    <h4 class="font-body-md text-body-md font-bold">${esc(i.name)}</h4>
+                    <p class="font-label-sm text-label-sm text-on-surface-variant">Qty: ${esc(i.qty)} • ${formatWeight(i.weightGrams)} each</p>
                 </div>
-            `).join('') || '<p class="text-on-surface-variant text-sm p-4">No items in this order.</p>';
+                <p class="font-body-md text-body-md font-bold text-on-surface flex-none">₹${(i.price * i.qty).toFixed(2)}</p>
+            </div>
+        `).join('') || '<p class="text-on-surface-variant text-sm p-4">No items in this order.</p>';
 
-            if (sessionData.status !== 'pending') {
-                document.getElementById('statusText').textContent = `Session already marked: ${sessionData.status}`;
-            }
+        if (sessionData.status !== 'pending') {
+            // Already handled (for example opened from Recent Scans): view only
+            orderLocked = true;
+            rejectBtn.disabled = true;
+            weightInput.disabled = true;
+            if (sessionData.verifiedWeightKg) weightInput.value = sessionData.verifiedWeightKg;
+            weightStatus.className = 'p-4 rounded-xl bg-surface-container-high border border-outline-variant flex items-center gap-3 transition-colors';
+            statusDot.className = 'w-3 h-3 rounded-full bg-tertiary flex-none';
+            statusText.textContent = `This order is already marked: ${sessionData.status}`;
+            verifyBtn.disabled = true;
+            return;
         }
-        loadOrder();
+        updateWeightDisplay();
+    }
+    loadOrder();
 
-        // ---------------------------------------------------------
-        // Weight input — compares the associate's scale reading
-        // against the expected weight computed from the customer's
-        // scanned items (with a small tolerance for packaging/scale
-        // variance).
-        // ---------------------------------------------------------
-        const weightInput = document.getElementById('weightInput');
-        const weightStatus = document.getElementById('weightStatus');
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
+    // ---------------------------------------------------------
+    // Weight check: compares the scale reading with the expected
+    // weight. Verified stays locked until the weight matches.
+    // ---------------------------------------------------------
+    function setStatus(kind, text) {
+        const styles = {
+            wait:  ['bg-surface-container-high border-outline-variant', 'bg-tertiary'],
+            ok:    ['bg-secondary-container border-secondary', 'bg-secondary'],
+            bad:   ['bg-error-container border-error', 'bg-error']
+        }[kind];
+        weightStatus.className = `p-4 rounded-xl ${styles[0]} border flex items-center gap-3 transition-colors`;
+        statusDot.className = `w-3 h-3 rounded-full ${styles[1]} flex-none`;
+        statusText.textContent = text;
+    }
 
-        function updateWeightDisplay() {
-            const currentKg = parseFloat(weightInput.value);
-            const expectedKg = expectedWeightGrams / 1000;
+    function updateWeightDisplay() {
+        if (orderLocked) return;
+        const currentKg = parseFloat(weightInput.value);
+        const expectedKg = expectedWeightGrams / 1000;
 
-            if (!currentKg) {
-                weightStatus.className = 'p-4 rounded-xl bg-surface-container-high border border-outline-variant flex items-center gap-3 transition-colors';
-                statusDot.className = 'w-3 h-3 rounded-full bg-tertiary';
-                statusText.innerText = expectedWeightGrams
-                    ? `Awaiting scale reading (expecting ~${expectedKg.toFixed(2)} kg)...`
-                    : 'Awaiting scale reading...';
-                return;
-            }
-
-            if (!expectedWeightGrams) {
-                // No expected weight on file for this order (e.g. an item
-                // with no weight set in the catalog) — just log the reading.
-                weightStatus.className = 'p-4 rounded-xl bg-secondary-container border border-secondary flex items-center gap-3 transition-colors';
-                statusDot.className = 'w-3 h-3 rounded-full bg-secondary';
-                statusText.innerText = `Weight logged: ${currentKg.toFixed(2)} kg (no expected weight on file to compare)`;
-                return;
-            }
-
-            // Allow a small tolerance for packaging variance / scale precision
-            const diffGrams = Math.abs(currentKg * 1000 - expectedWeightGrams);
-            const toleranceGrams = Math.max(30, expectedWeightGrams * 0.05); // 5%, min 30g
-
-            if (diffGrams <= toleranceGrams) {
-                weightStatus.className = 'p-4 rounded-xl bg-secondary-container border border-secondary flex items-center gap-3 transition-colors';
-                statusDot.className = 'w-3 h-3 rounded-full bg-secondary';
-                statusText.innerText = `Weight matched: ${currentKg.toFixed(2)} kg (expected ${expectedKg.toFixed(2)} kg)`;
-            } else {
-                weightStatus.className = 'p-4 rounded-xl bg-error-container border border-error flex items-center gap-3 transition-colors';
-                statusDot.className = 'w-3 h-3 rounded-full bg-error';
-                statusText.innerText = `Weight mismatch: ${currentKg.toFixed(2)} kg vs expected ${expectedKg.toFixed(2)} kg — recheck items`;
-            }
+        if (!currentKg || currentKg <= 0) {
+            setStatus('wait', expectedWeightGrams
+                ? `Enter the scale reading (expecting about ${expectedKg.toFixed(2)} kg)`
+                : 'Enter the scale reading');
+            verifyBtn.disabled = true;
+            return;
         }
 
-        function incrementWeight() {
-            weightInput.value = (parseFloat(weightInput.value) + 0.1).toFixed(1);
-            updateWeightDisplay();
+        if (!expectedWeightGrams) {
+            // No expected weight on file for this order, so there is nothing to compare with
+            setStatus('ok', `Weight logged: ${currentKg.toFixed(2)} kg (no expected weight on file to compare)`);
+            verifyBtn.disabled = false;
+            return;
         }
 
-        function decrementWeight() {
-            const val = (parseFloat(weightInput.value) - 0.1).toFixed(1);
-            weightInput.value = val < 0 ? 0 : val;
-            updateWeightDisplay();
+        const diffGrams = Math.abs(currentKg * 1000 - expectedWeightGrams);
+        if (diffGrams <= toleranceGrams()) {
+            setStatus('ok', `Weight matched: ${currentKg.toFixed(2)} kg (expected ${expectedKg.toFixed(2)} kg)`);
+            verifyBtn.disabled = false;
+        } else {
+            setStatus('bad', `Weight mismatch: ${currentKg.toFixed(2)} kg vs expected ${expectedKg.toFixed(2)} kg. Recheck the bag or reject the order.`);
+            verifyBtn.disabled = true;
         }
+    }
 
-        weightInput.addEventListener('input', updateWeightDisplay);
+    function incrementWeight() {
+        weightInput.value = ((parseFloat(weightInput.value) || 0) + 0.05).toFixed(2);
+        updateWeightDisplay();
+    }
 
-        // ---------------------------------------------------------
-        // Verify / Reject — writes back to Firestore.
-        // The customer's token.html page is listening for this
-        // change and will redirect them to payment automatically.
-        // ---------------------------------------------------------
-        document.getElementById('verify-btn').addEventListener('click', async () => {
+    function decrementWeight() {
+        const val = (parseFloat(weightInput.value) || 0) - 0.05;
+        weightInput.value = val <= 0 ? '' : val.toFixed(2);
+        updateWeightDisplay();
+    }
+
+    weightInput.addEventListener('input', updateWeightDisplay);
+
+    // ---------------------------------------------------------
+    // Verify / Reject: writes back to Firestore.
+    // The customer's token.html page is listening for this
+    // change and moves them to payment automatically.
+    // ---------------------------------------------------------
+    verifyBtn.addEventListener('click', async () => {
+        if (verifyBtn.disabled || orderLocked) return;
+        verifyBtn.disabled = true;
+        try {
             await db.collection('sessions').doc(token).update({
                 status: 'verified',
                 verifiedWeightKg: parseFloat(weightInput.value) || null,
                 verifiedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            alert('Order verified — customer has been sent to payment.');
+            alert('Order verified. The customer has been sent to payment.');
             window.location.href = 'employee-dashboard.html';
-        });
+        } catch (err) {
+            alert('Could not verify the order (' + (err.code || err.message) + '). Please try again.');
+            updateWeightDisplay();
+        }
+    });
 
-        document.getElementById('reject-btn').addEventListener('click', async () => {
-            if (!confirm('Reject this order? The customer will be asked to see an associate.')) return;
+    rejectBtn.addEventListener('click', async () => {
+        if (rejectBtn.disabled || orderLocked) return;
+        if (!confirm('Reject this order? The customer will be asked to see an associate.')) return;
+        rejectBtn.disabled = true;
+        try {
             await db.collection('sessions').doc(token).update({ status: 'rejected' });
             window.location.href = 'employee-dashboard.html';
-        });
-    </script>
+        } catch (err) {
+            alert('Could not reject the order (' + (err.code || err.message) + '). Please try again.');
+            rejectBtn.disabled = false;
+        }
+    });
+</script>
 </body></html>
