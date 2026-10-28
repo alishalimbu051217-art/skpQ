@@ -215,7 +215,7 @@ const token = generateToken();
 try {
 await db.collection('sessions').doc(token).set({
 customerUid: user.uid,
-customerName: user.displayName || null,
+customerName: user.displayName || (user.email ? user.email.split('@')[0] : null),
 items: items,
 total: Cart.total(),
 totalWeightGrams: items.reduce((s, i) => s + (i.weightGrams || 0) * i.qty, 0),
