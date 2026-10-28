@@ -54,17 +54,13 @@ Start Scanning / Verify Order
 <span class="material-symbols-outlined text-[#0D9488]">support_agent</span>
 <span class="text-sm font-medium">Support</span>
 </button>
-<button class="flex flex-col items-center gap-2 p-4 rounded-xl border border-black/10 hover:bg-black/5 transition-colors" id="logout-btn-2">
-<span class="material-symbols-outlined text-[#0D9488]">logout</span>
-<span class="text-sm font-medium">Log out</span>
-</button>
 </div>
 </section>
 </main>
 <script>
     auth.onAuthStateChanged(user => {
         if (!user || localStorage.getItem('skpq_role') !== 'employee') {
-            window.location.href = 'employee-login.html';
+            window.location.href = 'index.html';
             return;
         }
         document.getElementById('employee-email').textContent = user.email || 'Staff member';
@@ -73,9 +69,8 @@ Start Scanning / Verify Order
     async function doLogout() {
         await auth.signOut();
         localStorage.removeItem('skpq_role');
-        window.location.href = 'employee-login.html';
+        window.location.href = 'index.html';
     }
     document.getElementById('logout-btn').addEventListener('click', doLogout);
-    document.getElementById('logout-btn-2').addEventListener('click', doLogout);
 </script>
 </body></html>
