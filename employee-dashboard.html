@@ -18,131 +18,129 @@
 <link rel="stylesheet" href="css/tailwind.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <style>
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            display: inline-block;
-            line-height: 1;
-            text-transform: none;
-            letter-spacing: normal;
-            word-wrap: normal;
-            white-space: nowrap;
-            direction: ltr;
-        }
-        .scanner-overlay {
-            background: rgba(0, 0, 0, 0.4);
-            clip-path: polygon(0% 0%, 0% 100%, 10% 100%, 10% 15%, 90% 15%, 90% 85%, 10% 85%, 10% 100%, 100% 100%, 100% 0%);
-        }
-        @keyframes scan {
-            0% { top: 15%; }
-            50% { top: 85%; }
-            100% { top: 15%; }
-        }
-        .scan-line {
-            animation: scan 3s ease-in-out infinite;
-        }
-    </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
+    body { font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        display: inline-block; line-height: 1; text-transform: none; letter-spacing: normal;
+        word-wrap: normal; white-space: nowrap; direction: ltr;
     }
-  </style>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+
+    /* Leave room for the fixed bottom menu so nothing is cut off */
+    .page { width: 100%; max-width: 440px; margin: 0 auto;
+            padding: 20px 20px calc(110px + env(safe-area-inset-bottom, 0px)); }
+    .intro { text-align: center; margin-bottom: 20px; }
+    .intro h2 { font-size: 26px; font-weight: 800; margin: 0; }
+    .intro p { font-size: 15px; color: #5b6665; margin: 8px 0 0; line-height: 1.45; }
+
+    /* Viewfinder: one square, one frame */
+    .finder { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 28px;
+              overflow: hidden; background: #0f1716; box-shadow: 0 10px 30px rgba(0,0,0,.15); }
+    #qr-reader { position: absolute; inset: 0; border: 0 !important; }
+    #qr-reader video { width: 100% !important; height: 100% !important; object-fit: cover; }
+    /* hide the library's own white corner marks, we draw our own */
+    #qr-shaded-region { display: none !important; }
+    #qr-reader img, #qr-reader__dashboard { display: none !important; }
+
+    .cam-msg { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+               justify-content: center; gap: 10px; padding: 28px; text-align: center; color: #cfdad8;
+               font-size: 15px; line-height: 1.45; }
+    .cam-msg .material-symbols-outlined { font-size: 40px; color: #7fd6cb; }
+
+    .shade { position: absolute; inset: 0; background: rgba(0,0,0,.45); pointer-events: none;
+             clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 0,
+                                15% 15%, 15% 85%, 85% 85%, 85% 15%, 15% 15%); }
+    .corner { position: absolute; width: 38px; height: 38px; border: 0 solid #2dd4bf; pointer-events: none; }
+    .corner.tl { top: 15%; left: 15%; border-top-width: 4px; border-left-width: 4px; border-top-left-radius: 12px; }
+    .corner.tr { top: 15%; right: 15%; border-top-width: 4px; border-right-width: 4px; border-top-right-radius: 12px; }
+    .corner.bl { bottom: 15%; left: 15%; border-bottom-width: 4px; border-left-width: 4px; border-bottom-left-radius: 12px; }
+    .corner.br { bottom: 15%; right: 15%; border-bottom-width: 4px; border-right-width: 4px; border-bottom-right-radius: 12px; }
+    .line { position: absolute; left: 15%; right: 15%; height: 2px; background: rgba(45,212,191,.8);
+            box-shadow: 0 0 12px rgba(45,212,191,.8); pointer-events: none; animation: scan 3s ease-in-out infinite; }
+    @keyframes scan { 0%,100% { top: 15%; } 50% { top: 85%; } }
+    @media (prefers-reduced-motion: reduce) { .line { animation: none; top: 50%; } }
+
+    .tools { position: absolute; bottom: 3%; left: 0; right: 0; display: flex; justify-content: center; gap: 14px; }
+    .tool { display: none; width: 42px; height: 42px; border-radius: 50%; border: 0; cursor: pointer;
+            background: rgba(255,255,255,.22); color: #fff; align-items: center; justify-content: center; }
+    .tool.show { display: flex; }
+    .tool.on { background: #2dd4bf; color: #0b2f2a; }
+
+    /* Status line + manual entry */
+    #status { min-height: 22px; text-align: center; font-size: 14px; margin: 14px 0 0; color: #5b6665; }
+    #status.err { color: #b3261e; }
+    .manual { display: flex; gap: 8px; margin-top: 10px; }
+    .manual input { flex: 1; min-width: 0; height: 56px; padding: 0 16px; font-size: 16px; font-family: inherit;
+                    border: 2px solid #c3cccb; border-radius: 16px; background: #fff; outline: 0; }
+    .manual input:focus { border-color: #0d9488; }
+    .manual button { height: 56px; padding: 0 20px; border: 0; border-radius: 16px; background: #0d9488;
+                     color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; }
+    .manual button:disabled { opacity: .6; }
+    .help { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 18px;
+            height: 56px; border: 1px solid #c3cccb; border-radius: 16px; background: #fff; font-size: 15px;
+            font-weight: 600; color: #1b1f23; cursor: pointer; }
+    .help .material-symbols-outlined { color: #0d9488; }
+    .help:hover { background: rgba(0,0,0,.04); }
+    button:focus-visible { outline: 3px solid #0b5a52; outline-offset: 2px; }
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script src="js/cart.js"></script>
 </head>
 <body class="bg-background text-on-surface min-h-screen flex flex-col">
 <!-- TopAppBar -->
 <header class="flex justify-between items-center px-gutter w-full h-16 sticky top-0 z-50 bg-surface border-b border-outline-variant">
 <div class="flex items-center gap-4">
-<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-primary-container transition-colors active:opacity-80" onclick="window.location.href='employee-home.html'">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-primary-container transition-colors active:opacity-80" onclick="window.location.href='employee-home.html'" aria-label="Back to home">
 <span class="material-symbols-outlined text-primary">arrow_back</span>
 </button>
 <h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary font-black tracking-tight">Staff Portal</h1>
 </div>
 <div class="flex items-center gap-3">
-<div class="text-right hidden sm:block">
-<p class="text-label-sm font-bold text-on-surface">Alex Johnson</p>
-<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Terminal 04</p>
-</div>
 <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center border-2 border-primary">
 <span class="material-symbols-outlined text-on-primary-container">person</span>
 </div>
 </div>
 </header>
-<main class="flex-grow flex flex-col items-center justify-center p-gutter max-w-4xl mx-auto w-full">
-<!-- Dashboard Intro -->
-<div class="text-center mb-xl">
-<h2 class="font-headline-lg text-headline-lg text-on-surface">Ready to Scan</h2>
-<p class="font-body-md text-body-md text-on-surface-variant mt-2">Position the customer's QR code within the frame to fetch order details.</p>
-</div>
-<!-- Scanner Viewfinder Container -->
-<div class="relative w-full aspect-square max-w-[400px] rounded-[32px] overflow-hidden shadow-[0px_10px_30px_rgba(0,0,0,0.1)] bg-black border-4 border-surface">
-<!-- Camera Fallback (shown until the QR reader takes over) -->
-<div class="absolute inset-0 bg-cover bg-center" id="camera-fallback" data-alt="A POV perspective looking through a smartphone camera lens at a clean, modern retail environment. The lighting is bright and professional with teal and emerald green accents in the background. A blurry customer hand is visible holding up a smartphone with a high-contrast black and white QR code displayed on the screen, ready to be scanned by the interface." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDgGAcdiT9VPoY90LPsfbFgIwevMDH9bUpSxjnWodf8EPa6ZKokxmOMkB09GfGKw0rUX-EN-zkupOd8FFSbLpVG590wQMDPUR0B3OlsAFKTyq2SuVwCwxLuJAN8g-8cpbE03jJnNgCnFRb5UGdrBNSAUA4ddT0jWBzG8tuLQb3dlinckRzdr68AcSLunFO0oykG4KWEME-u8Ys1mDCtfw1dEUqaUlFjXkwyFdBYpEF3dY-7rr0_hquEcQ')"></div>
-<!-- html5-qrcode injects its <video> into this div once the camera starts -->
-<div class="absolute inset-0 [&_video]:w-full [&_video]:h-full [&_video]:object-cover" id="qr-reader"></div>
-<!-- Dark Overlay with Cutout -->
-<div class="absolute inset-0 scanner-overlay"></div>
-<!-- Viewfinder Brackets -->
-<div class="absolute inset-0 pointer-events-none">
-<!-- Top Left -->
-<div class="absolute top-[15%] left-[10%] w-12 h-12 border-t-4 border-l-4 border-primary rounded-tl-lg"></div>
-<!-- Top Right -->
-<div class="absolute top-[15%] right-[10%] w-12 h-12 border-t-4 border-r-4 border-primary rounded-tr-lg"></div>
-<!-- Bottom Left -->
-<div class="absolute bottom-[15%] left-[10%] w-12 h-12 border-b-4 border-l-4 border-primary rounded-bl-lg"></div>
-<!-- Bottom Right -->
-<div class="absolute bottom-[15%] right-[10%] w-12 h-12 border-b-4 border-r-4 border-primary rounded-br-lg"></div>
-<!-- Animated Scan Line -->
-<div class="scan-line absolute left-[10%] right-[10%] h-0.5 bg-primary/60 shadow-[0_0_15px_rgba(0,104,95,0.8)] z-10"></div>
-</div>
-<!-- Torch / Zoom Controls -->
-<div class="absolute bottom-md left-1/2 -translate-x-1/2 flex gap-gutter">
-<button class="w-12 h-12 rounded-full bg-surface/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-surface/40 transition-colors">
-<span class="material-symbols-outlined">flashlight_on</span>
-</button>
-<button class="w-12 h-12 rounded-full bg-surface/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-surface/40 transition-colors">
-<span class="material-symbols-outlined">zoom_in</span>
-</button>
-</div>
-</div>
-<!-- Manual Entry & Actions Section -->
-<div class="w-full max-w-[400px] mt-xl space-y-lg">
-<div class="relative group">
-<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-<span class="material-symbols-outlined text-outline">pin</span>
-</div>
-<input class="block w-full h-[56px] pl-12 pr-4 bg-surface border-2 border-outline-variant rounded-xl font-body-md text-on-surface focus:ring-0 focus:border-primary transition-all placeholder:text-outline" id="manual-token-input" placeholder="Enter manual token number" type="text"/>
-<div class="absolute inset-y-0 right-2 flex items-center">
-<button class="h-10 px-4 bg-secondary-container text-on-secondary-container rounded-lg font-label-md hover:bg-secondary-fixed transition-colors" id="fetch-order-btn">
-                        FETCH ORDER
-                    </button>
-</div>
-</div>
-<div class="grid grid-cols-2 gap-md">
-<button class="flex flex-col items-center justify-center p-md bg-surface border border-outline-variant rounded-2xl hover:bg-surface-container transition-all group">
-<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-<span class="material-symbols-outlined text-primary">history</span>
-</div>
-<span class="font-label-md text-on-surface">Recent Scans</span>
-</button>
-<button class="flex flex-col items-center justify-center p-md bg-surface border border-outline-variant rounded-2xl hover:bg-surface-container transition-all group" onclick="window.location.href='support.html'">
-<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-<span class="material-symbols-outlined text-primary">support_agent</span>
-</div>
-<span class="font-label-md text-on-surface">Get Help</span>
-</button>
-</div>
-</div>
+
+<main class="page">
+  <div class="intro">
+    <h2>Ready to scan</h2>
+    <p>Hold the customer's QR code inside the frame to open their order.</p>
+  </div>
+
+  <div class="finder">
+    <div id="qr-reader"></div>
+    <div class="cam-msg" id="cam-msg">
+      <span class="material-symbols-outlined">videocam</span>
+      <span id="cam-msg-text">Starting camera...</span>
+    </div>
+    <div class="shade"></div>
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+    <div class="line"></div>
+    <div class="tools">
+      <button class="tool" id="torch-btn" type="button" aria-label="Torch"><span class="material-symbols-outlined">flashlight_on</span></button>
+      <button class="tool" id="zoom-btn" type="button" aria-label="Zoom"><span class="material-symbols-outlined">zoom_in</span></button>
+    </div>
+  </div>
+
+  <p id="status" role="status"></p>
+
+  <div class="manual">
+    <input id="manual-token-input" type="text" placeholder="Or type the token number" autocomplete="off" aria-label="Token number"/>
+    <button id="fetch-order-btn" type="button">Fetch</button>
+  </div>
+
+  <button class="help" type="button" onclick="window.location.href='support.html'">
+    <span class="material-symbols-outlined">support_agent</span> Get help
+  </button>
 </main>
+
 <!-- Bottom Navigation Shell -->
-<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container shadow-[0px_-4px_20px_rgba(0,0,0,0.05)] rounded-t-xl">
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface-container shadow-[0px_-4px_20px_rgba(0,0,0,0.05)] rounded-t-xl" style="padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));">
 <a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="employee-home.html">
 <span class="material-symbols-outlined">dashboard</span>
 <span class="font-label-sm text-label-sm">Home</span>
@@ -156,6 +154,7 @@
 <span class="font-label-sm text-label-sm">Support</span>
 </a>
 </nav>
+
 <script>
     // ---------------------------------------------------------
     // Require an employee session
@@ -166,22 +165,40 @@
         }
     });
 
+    const statusEl = document.getElementById('status');
+    function setStatus(text, isErr) {
+        statusEl.textContent = text || '';
+        statusEl.className = isErr ? 'err' : '';
+    }
+
     // ---------------------------------------------------------
     // Fetch a customer's session by token and go verify it
     // ---------------------------------------------------------
+    let busy = false;
     async function fetchOrder(token) {
         token = (token || '').trim();
-        if (!token) return;
-        const doc = await db.collection('sessions').doc(token).get();
-        if (!doc.exists) {
-            alert('No order found for token ' + token);
-            return;
+        if (!token || busy) return;
+        busy = true;
+        const btn = document.getElementById('fetch-order-btn');
+        btn.disabled = true;
+        setStatus('Looking up order...');
+        try {
+            const doc = await db.collection('sessions').doc(token).get();
+            if (!doc.exists) {
+                setStatus('No order found for token ' + token + '. Check the number and try again.', true);
+                setTimeout(() => { busy = false; }, 1500);   // let the scanner try again
+                return;
+            }
+            window.location.href = 'order-verification.html?token=' + encodeURIComponent(token);
+        } catch (err) {
+            setStatus('Could not load the order (' + (err.code || err.message) + ').', true);
+            setTimeout(() => { busy = false; }, 1500);
+        } finally {
+            btn.disabled = false;
         }
-        window.location.href = `order-verification.html?token=${token}`;
     }
 
-    const fetchBtn = document.getElementById('fetch-order-btn');
-    fetchBtn.addEventListener('click', () => {
+    document.getElementById('fetch-order-btn').addEventListener('click', () => {
         fetchOrder(document.getElementById('manual-token-input').value);
     });
     document.getElementById('manual-token-input').addEventListener('keydown', e => {
@@ -191,29 +208,72 @@
     // ---------------------------------------------------------
     // QR scanning (html5-qrcode)
     // ---------------------------------------------------------
-    if (typeof Html5Qrcode !== 'undefined') {
-        const qr = new Html5Qrcode("qr-reader");
-        qr.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 220, height: 220 } },
-            decodedText => {
-                qr.stop().catch(() => {});
-                fetchOrder(decodedText);
-            },
-            () => { /* ignore per-frame scan misses */ }
-        ).then(() => {
-            document.getElementById('camera-fallback').style.display = 'none';
-        }).catch(err => {
-            console.warn('Camera unavailable, falling back to manual entry:', err);
-        });
+    const camMsg = document.getElementById('cam-msg');
+    const camMsgText = document.getElementById('cam-msg-text');
+    function camProblem(text) { camMsg.style.display = 'flex'; camMsgText.textContent = text; }
+
+    function setupCameraControls() {
+        const video = document.querySelector('#qr-reader video');
+        if (!video || !video.srcObject) return;
+        const track = video.srcObject.getVideoTracks()[0];
+        if (!track || !track.getCapabilities) return;
+        const caps = track.getCapabilities();
+
+        if (caps.torch) {
+            const torchBtn = document.getElementById('torch-btn');
+            let on = false;
+            torchBtn.classList.add('show');
+            torchBtn.addEventListener('click', async () => {
+                on = !on;
+                try {
+                    await track.applyConstraints({ advanced: [{ torch: on }] });
+                    torchBtn.classList.toggle('on', on);
+                } catch (e) { on = !on; }
+            });
+        }
+        if (caps.zoom) {
+            const zoomBtn = document.getElementById('zoom-btn');
+            const min = caps.zoom.min, max = caps.zoom.max;
+            const levels = [min, min + (max - min) / 2, max];
+            let i = 0;
+            zoomBtn.classList.add('show');
+            zoomBtn.addEventListener('click', async () => {
+                i = (i + 1) % levels.length;
+                try {
+                    await track.applyConstraints({ advanced: [{ zoom: levels[i] }] });
+                    zoomBtn.classList.toggle('on', i > 0);
+                } catch (e) {}
+            });
+        }
     }
 
-        // Mock camera focus effect
-        document.addEventListener('mousemove', (e) => {
-            const scanner = document.querySelector('.scanner-overlay');
-            if (scanner) {
-                // Future interactive focus effects can go here
+    if (typeof Html5Qrcode === 'undefined') {
+        camProblem('Camera scanner could not load. Type the token number below.');
+    } else {
+        const qr = new Html5Qrcode('qr-reader');
+        qr.start(
+            { facingMode: 'environment' },
+            {
+                fps: 10,
+                // scan area matches the on-screen frame (70% of the viewfinder)
+                qrbox: (w, h) => { const s = Math.floor(Math.min(w, h) * 0.7); return { width: s, height: s }; }
+            },
+            decodedText => { fetchOrder(decodedText); },
+            () => { /* ignore per-frame scan misses */ }
+        ).then(() => {
+            camMsg.style.display = 'none';
+            setupCameraControls();
+        }).catch(err => {
+            console.warn('Camera unavailable:', err);
+            const text = String(err && (err.name || err.message || err));
+            if (/NotAllowed|Permission/i.test(text)) {
+                camProblem('Camera is blocked. Tap the lock icon next to the address, allow Camera, then reload. You can also type the token below.');
+            } else if (/NotFound|Devices/i.test(text)) {
+                camProblem('No camera found. Type the token number below.');
+            } else {
+                camProblem('Camera could not start. Type the token number below.');
             }
         });
-    </script>
+    }
+</script>
 </body></html>
