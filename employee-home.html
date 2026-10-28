@@ -20,6 +20,30 @@
 <style>
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; display: inline-block; line-height: 1; }
     body { font-family: 'Inter', sans-serif; }
+
+    /* Today's summary */
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stat { border-radius: 14px; padding: 14px 6px; text-align: center; }
+    .stat b { display: block; font-size: 28px; line-height: 1.1; }
+    .stat span { font-size: 13px; font-weight: 500; }
+    .stat.ok   { background: #e3f4ef; color: #0b6b5e; }
+    .stat.bad  { background: #fbe9e7; color: #a8281c; }
+    .stat.wait { background: #fff3d6; color: #8a5a00; }
+
+    /* Recent scans list */
+    #recent-box { display: none; margin-top: 14px; }
+    #recent-box.open { display: block; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+           width: 100%; text-align: left; background: #fff; border: 1px solid rgba(0,0,0,.1);
+           border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; }
+    .row:hover { background: rgba(0,0,0,.04); }
+    .row .tok { font-weight: 700; font-size: 15px; }
+    .row .time { font-size: 12px; color: rgba(0,0,0,.5); }
+    .pill { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+    .pill.ok { background: #e3f4ef; color: #0b6b5e; }
+    .pill.bad { background: #fbe9e7; color: #a8281c; }
+    .pill.wait { background: #fff3d6; color: #8a5a00; }
+    .note { font-size: 14px; color: rgba(0,0,0,.5); text-align: center; padding: 8px 0; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -48,13 +72,27 @@ Start Scanning / Verify Order
 </button>
 
 <section class="bg-white rounded-2xl border border-black/10 p-5">
+<h3 class="font-semibold mb-3">Today's orders</h3>
+<div class="stats">
+  <div class="stat ok"><b id="n-ok">-</b><span>Verified</span></div>
+  <div class="stat bad"><b id="n-bad">-</b><span>Rejected</span></div>
+  <div class="stat wait"><b id="n-wait">-</b><span>Waiting</span></div>
+</div>
+</section>
+
+<section class="bg-white rounded-2xl border border-black/10 p-5">
 <h3 class="font-semibold mb-3">Quick links</h3>
 <div class="grid grid-cols-2 gap-3">
 <button class="flex flex-col items-center gap-2 p-4 rounded-xl border border-black/10 hover:bg-black/5 transition-colors" onclick="window.location.href='support.html'">
 <span class="material-symbols-outlined text-[#0D9488]">support_agent</span>
 <span class="text-sm font-medium">Support</span>
 </button>
+<button class="flex flex-col items-center gap-2 p-4 rounded-xl border border-black/10 hover:bg-black/5 transition-colors" id="recent-btn">
+<span class="material-symbols-outlined text-[#0D9488]">history</span>
+<span class="text-sm font-medium">Recent Scans</span>
+</button>
 </div>
+<div id="recent-box"><div class="note">Loading...</div></div>
 </section>
 </main>
 <script>
@@ -64,6 +102,7 @@ Start Scanning / Verify Order
             return;
         }
         document.getElementById('employee-email').textContent = user.email || 'Staff member';
+        loadToday();
     });
 
     async function doLogout() {
@@ -72,5 +111,79 @@ Start Scanning / Verify Order
         window.location.href = 'index.html';
     }
     document.getElementById('logout-btn').addEventListener('click', doLogout);
+
+    // ---------------------------------------------------------
+    // Today's summary + recent scans
+    // ---------------------------------------------------------
+    function bucket(status) {
+        const s = String(status || '').toLowerCase();
+        if (['verified', 'paid', 'completed', 'done'].includes(s)) return 'ok';
+        if (s === 'rejected' || s === 'reject') return 'bad';
+        return 'wait';
+    }
+    const LABEL = { ok: 'Verified', bad: 'Rejected', wait: 'Waiting' };
+
+    function toDate(v) {
+        if (!v) return null;
+        if (typeof v.toDate === 'function') return v.toDate();
+        const d = new Date(v);
+        return isNaN(d) ? null : d;
+    }
+
+    async function loadToday() {
+        const box = document.getElementById('recent-box');
+        try {
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            const snap = await db.collection('sessions')
+                .where('createdAt', '>=', start)
+                .orderBy('createdAt', 'desc')
+                .limit(100)
+                .get();
+
+            const count = { ok: 0, bad: 0, wait: 0 };
+            const rows = [];
+            snap.forEach(doc => {
+                const d = doc.data();
+                const b = bucket(d.status);
+                count[b]++;
+                rows.push({ token: doc.id, b, when: toDate(d.createdAt) });
+            });
+
+            document.getElementById('n-ok').textContent = count.ok;
+            document.getElementById('n-bad').textContent = count.bad;
+            document.getElementById('n-wait').textContent = count.wait;
+
+            if (!rows.length) {
+                box.innerHTML = '<div class="note">No orders yet today.</div>';
+                return;
+            }
+            box.innerHTML = '';
+            rows.slice(0, 5).forEach(r => {
+                const btn = document.createElement('button');
+                btn.className = 'row';
+                const time = r.when
+                    ? r.when.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })
+                    : '';
+                btn.innerHTML =
+                    '<div><div class="tok"></div><div class="time"></div></div>' +
+                    '<span class="pill ' + r.b + '">' + LABEL[r.b] + '</span>';
+                btn.querySelector('.tok').textContent = 'Token ' + r.token;
+                btn.querySelector('.time').textContent = time;
+                btn.addEventListener('click', () => {
+                    window.location.href = 'order-verification.html?token=' + encodeURIComponent(r.token);
+                });
+                box.appendChild(btn);
+            });
+        } catch (err) {
+            console.warn('Could not load today\'s orders:', err);
+            ['n-ok', 'n-bad', 'n-wait'].forEach(id => document.getElementById(id).textContent = '-');
+            box.innerHTML = '<div class="note">Could not load orders (' + (err.code || err.message) + ').</div>';
+        }
+    }
+
+    document.getElementById('recent-btn').addEventListener('click', () => {
+        document.getElementById('recent-box').classList.toggle('open');
+    });
 </script>
 </body></html>
