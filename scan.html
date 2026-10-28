@@ -15,27 +15,6 @@
 <meta name="apple-mobile-web-app-title" content="SkpQ">
 <script src="js/pwa.js" defer></script>
 <title>SkpQ - Scan Item</title>
-<script>
-// TEMPORARY DEBUG: shows any script error on screen so it can be screenshotted. Remove before final submission.
-(function () {
-function showDebug(msg) {
-var b = document.getElementById('mq-debug');
-if (!b) {
-b = document.createElement('div');
-b.id = 'mq-debug';
-b.style.cssText = 'position:fixed;left:8px;right:8px;top:70px;z-index:99999;background:#ba1a1a;color:#fff;font:12px/1.4 monospace;padding:8px 10px;border-radius:8px;white-space:pre-wrap;word-break:break-word;max-height:40vh;overflow:auto';
-(document.body || document.documentElement).appendChild(b);
-}
-b.textContent += msg + '\n';
-}
-window.addEventListener('error', function (e) {
-showDebug('ERROR: ' + e.message + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : ''));
-});
-window.addEventListener('unhandledrejection', function (e) {
-showDebug('PROMISE ERROR: ' + (e.reason && (e.reason.message || e.reason.name) || e.reason));
-});
-})();
-</script>
 <link rel="stylesheet" href="css/tailwind.css">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
@@ -730,8 +709,11 @@ scanLocked = true;
 recentReads = [];
 try {
 const found = await findProductForManualCode(code); // also tries the 12/13-digit variants
-if (found) addProductToCart(found.code, found.product);
-else addProductToCart(code, await lookupProduct(code));
+   if (found) {
+     addProductToCart(found.code, found.product);
+   } else {
+     setManualMessage("This product isn't in our catalog yet (" + code + "). Please ask a staff member for help.", true);
+   }
 } finally {
 // Require a fresh, deliberate hold-up-the-item moment before the next scan
 setTimeout(() => { scanLocked = false; }, 2000);
