@@ -127,6 +127,7 @@
     busy = true; go.disabled = true; go.textContent = "Checking...";
     try {
       await auth.signInWithEmailAndPassword(STAFF_EMAIL, pin.value);
+      localStorage.setItem("skpq_role", "employee");
       location.href = NEXT_PAGE;
     } catch (err) {
       const wrong = ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-login-credentials"];
