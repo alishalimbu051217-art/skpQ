@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +16,7 @@
   body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
          background: var(--bg); color: var(--ink); min-height: 100vh; }
   button { font-family: inherit; cursor: pointer; }
-  button:focus-visible, input:focus-visible { outline: 3px solid #0b5a52; outline-offset: 2px; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #0b5a52; outline-offset: 2px; }
   .hidden { display: none !important; }
 
   /* Login */
@@ -28,7 +29,9 @@
     width: 100%; height: 48px; padding: 0 14px; font-size: 16px; font-family: inherit;
     border: 1.5px solid #c3cccb; border-radius: 12px; background: #fff;
   }
-  input:focus { border-color: var(--teal); outline: 0; }
+  select { height: 44px; padding: 0 12px; font-size: 15px; font-family: inherit; border: 1.5px solid #c3cccb;
+           border-radius: 12px; background: #fff; color: var(--ink); max-width: 100%; }
+  input:focus, select:focus { border-color: var(--teal); outline: 0; }
   .btn { height: 48px; padding: 0 20px; border: 0; border-radius: 12px; font-size: 15px; font-weight: 700; }
   .btn.primary { background: var(--teal); color: #fff; }
   .btn.ghost { background: #fff; color: var(--ink); border: 1.5px solid #c3cccb; }
@@ -49,11 +52,39 @@
   header .right { display: flex; align-items: center; }
   header .btn { height: 38px; padding: 0 14px; font-size: 14px; }
 
-  /* Products */
+  /* Tabs */
+  .tabs { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab { height: 40px; padding: 0 18px; border-radius: 999px; border: 1.5px solid #c3cccb; background: #fff;
+         font-size: 14px; font-weight: 700; color: var(--ink); }
+  .tab.on { background: var(--teal); border-color: var(--teal); color: #fff; }
+  .tabs .spacer { flex: 1; }
+  .tabs .refresh { height: 40px; padding: 0 14px; font-size: 14px; }
+
+  /* Layout */
   .wrap { max-width: 900px; margin: 0 auto; padding: 20px 20px 60px; }
-  .bar { display: flex; gap: 10px; margin-bottom: 14px; }
+  .bar { display: flex; gap: 10px; margin-bottom: 10px; }
   .bar input { flex: 1; }
+  .filters { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filters select, .filters input { flex: 1; min-width: 140px; }
+  .filters input { height: 44px; }
   .count { font-size: 14px; color: var(--muted); margin: 0 2px 12px; }
+  .section-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+                   letter-spacing: .06em; margin: 22px 2px 10px; }
+  .section-title:first-child { margin-top: 0; }
+
+  /* Overview cards */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .stat { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .stat .k { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .stat .v { font-size: 26px; font-weight: 800; color: var(--teal-dark); margin-top: 4px; }
+  .stat .s { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .stat.alert { border-color: #e8c97a; background: #fffaf0; }
+  .stat.alert .v { color: var(--warn); }
+  .stat.link { cursor: pointer; }
+  .notice { background: var(--warn-bg); color: var(--warn); border-radius: 14px; padding: 12px 14px;
+            font-size: 14px; margin-bottom: 14px; line-height: 1.45; }
+
+  /* Products */
   .item { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px;
           margin-bottom: 10px; display: flex; gap: 12px; align-items: center; justify-content: space-between; }
   .item .info { min-width: 0; }
@@ -64,9 +95,30 @@
   .item .acts .btn { height: 38px; padding: 0 14px; font-size: 14px; }
   .item.bad { border-color: #e8c97a; background: #fffaf0; }
   .tag { display: inline-block; font-size: 12px; font-weight: 600; background: var(--warn-bg); color: var(--warn);
-         padding: 3px 8px; border-radius: 999px; margin-top: 6px; }
+         padding: 3px 8px; border-radius: 999px; margin-top: 6px; margin-right: 6px; }
   .empty { text-align: center; color: var(--muted); padding: 30px 0; }
   @media (max-width: 520px) { .item { flex-direction: column; align-items: stretch; } .item .acts .btn { flex: 1; } }
+
+  /* Orders */
+  .order { background: #fff; border: 1px solid var(--line); border-radius: 16px; margin-bottom: 10px; overflow: hidden; }
+  .order .o-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+                   padding: 14px 16px; cursor: pointer; }
+  .o-main { min-width: 0; }
+  .o-token { font-weight: 800; font-size: 16px; }
+  .o-sub { font-size: 13px; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
+  .o-total { font-weight: 800; color: var(--teal-dark); font-size: 17px; white-space: nowrap; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; margin-left: 8px; vertical-align: 2px; }
+  .pill.paid { background: #dff3f0; color: #00574d; }
+  .pill.verified { background: #e3eefc; color: #1a4f9c; }
+  .pill.pending { background: var(--warn-bg); color: var(--warn); }
+  .pill.rejected { background: #fdeceb; color: var(--err); }
+  .pill.wbad { background: #fdeceb; color: var(--err); }
+  .pill.wok { background: #eef3f2; color: #3d5552; }
+  .o-detail { border-top: 1px solid var(--line); padding: 12px 16px 14px; background: #fafcfc; font-size: 14px; }
+  .o-line { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; }
+  .o-line .l { min-width: 0; overflow-wrap: anywhere; }
+  .o-line .r { white-space: nowrap; color: var(--muted); }
+  .o-note { margin-top: 8px; font-size: 13px; color: var(--muted); }
 
   /* Dialog */
   .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end;
@@ -127,12 +179,65 @@
   </header>
 
   <div class="wrap">
-    <div class="bar">
-      <input type="search" id="search" placeholder="Search by name, barcode or category" aria-label="Search products">
-      <button class="btn primary" id="add-btn" type="button">Add product</button>
+    <div class="tabs">
+      <button class="tab on" data-tab="overview" type="button">Overview</button>
+      <button class="tab" data-tab="orders" type="button">Orders</button>
+      <button class="tab" data-tab="products" type="button">Products</button>
+      <span class="spacer"></span>
+      <button class="btn ghost refresh" id="refresh-btn" type="button">Refresh</button>
     </div>
-    <div class="count" id="count"></div>
-    <div id="list"></div>
+
+    <!-- OVERVIEW -->
+    <section id="tab-overview">
+      <div class="notice hidden" id="ov-notice"></div>
+      <div class="section-title">Today</div>
+      <div class="stats" id="stats-today"></div>
+      <div class="section-title">Overall</div>
+      <div class="stats" id="stats-all"></div>
+      <div class="count" id="ov-foot" style="margin-top:12px"></div>
+      <div class="section-title">Catalog</div>
+      <div class="stats" id="stats-products"></div>
+    </section>
+
+    <!-- ORDERS -->
+    <section class="hidden" id="tab-orders">
+      <div class="notice hidden" id="or-notice"></div>
+      <div class="filters">
+        <select id="o-range" aria-label="Date range">
+          <option value="today">Today</option>
+          <option value="week">Last 7 days</option>
+          <option value="all" selected>All loaded orders</option>
+        </select>
+        <select id="o-status" aria-label="Order status">
+          <option value="all">All statuses</option>
+          <option value="pending">Waiting for staff</option>
+          <option value="verified">Verified, awaiting payment</option>
+          <option value="paid">Paid</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <input type="search" id="o-search" placeholder="Search token, customer or item" aria-label="Search orders">
+      </div>
+      <div class="count" id="o-count"></div>
+      <div id="o-list"></div>
+    </section>
+
+    <!-- PRODUCTS -->
+    <section class="hidden" id="tab-products">
+      <div class="bar">
+        <input type="search" id="search" placeholder="Search by name, barcode or category" aria-label="Search products">
+        <button class="btn primary" id="add-btn" type="button">Add product</button>
+      </div>
+      <div class="filters">
+        <select id="p-cat" aria-label="Category"><option value="">All categories</option></select>
+        <select id="p-filter" aria-label="Show">
+          <option value="all">All products</option>
+          <option value="noweight">Missing weight</option>
+          <option value="broken">Broken barcode</option>
+        </select>
+      </div>
+      <div class="count" id="count"></div>
+      <div id="list"></div>
+    </section>
   </div>
 </div>
 
@@ -214,15 +319,236 @@
     }
     show('denied-view', false); show('admin-view', true);
     $('who').textContent = user.email || '';
-    loadProducts();
+    loadAll();
   });
+
+  // ------------------------------------------------------
+  // Shared helpers
+  // ------------------------------------------------------
+  const VALID_CODE = /^\d{8,14}$/;
+  const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  const hasWeight = p => Number(p.weightGrams) > 0;
+
+  function fmtTime(d) {
+    if (!d) return 'Time unavailable';
+    const day = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    const t = d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }).toUpperCase();
+    return day + ', ' + t;
+  }
+  const tsToDate = t => (t && typeof t.toDate === 'function') ? t.toDate() : null;
+  function fmtWeight(g) {
+    g = Math.abs(Number(g) || 0);
+    return g >= 1000 ? (g / 1000).toFixed(2) + ' kg' : Math.round(g) + ' g';
+  }
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  // ------------------------------------------------------
+  // Tabs and refresh
+  // ------------------------------------------------------
+  function showTab(name) {
+    ['overview', 'orders', 'products'].forEach(t => show('tab-' + t, t === name));
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  }
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+  function loadAll() { return Promise.all([loadProducts(), loadOrders()]); }
+  $('refresh-btn').addEventListener('click', async () => {
+    $('refresh-btn').disabled = true;
+    await loadAll();
+    $('refresh-btn').disabled = false;
+  });
+
+  // ------------------------------------------------------
+  // Orders (reads the sessions collection)
+  // ------------------------------------------------------
+  let orders = [];       // newest first
+  let ordersError = '';  // error code if the orders could not be read
+
+  const STATUS_LABEL = {
+    pending: 'Waiting for staff',
+    verified: 'Verified, awaiting payment',
+    paid: 'Paid',
+    rejected: 'Rejected'
+  };
+
+  async function loadOrders() {
+    ordersError = '';
+    try {
+      const snap = await db.collection('sessions').orderBy('createdAt', 'desc').limit(300).get();
+      orders = snap.docs.map(d => {
+        const o = d.data();
+        return { id: d.id, ...o, _created: tsToDate(o.createdAt), _paid: tsToDate(o.paidAt), _verified: tsToDate(o.verifiedAt) };
+      });
+    } catch (e) {
+      orders = [];
+      ordersError = e.code || e.message || 'error';
+    }
+    renderOverview();
+    renderOrders();
+  }
+
+  // Same rule staff use: 5% tolerance, at least 30 g
+  function weightCheck(o) {
+    const expected = Number(o.totalWeightGrams) || 0;
+    if (o.verifiedWeightKg == null || o.verifiedWeightKg === '' || !expected) return null;
+    const actual = Number(o.verifiedWeightKg) * 1000;
+    if (!isFinite(actual)) return null;
+    const diff = Math.round(actual - expected);
+    const tol = Math.max(30, expected * 0.05);
+    return { diff, ok: Math.abs(diff) <= tol };
+  }
+  const itemCount = o => (Array.isArray(o.items) ? o.items : []).reduce((s, i) => s + (Number(i.qty) || 0), 0);
+
+  function noticeFor(err) {
+    if (/permission/i.test(err)) {
+      return 'Orders cannot be read yet. This owner account needs permission in the Firestore rules (one small change). Products still work.';
+    }
+    return 'Could not load orders (' + err + '). Try Refresh.';
+  }
+
+  // ---------- Overview ----------
+  function statCard(k, v, s, cls, onClick) {
+    const c = el('div', 'stat' + (cls ? ' ' + cls : ''));
+    c.appendChild(el('div', 'k', k));
+    c.appendChild(el('div', 'v', v));
+    if (s) c.appendChild(el('div', 's', s));
+    if (onClick) { c.classList.add('link'); c.addEventListener('click', onClick); }
+    return c;
+  }
+
+  function renderOverview() {
+    const notice = $('ov-notice');
+    notice.classList.toggle('hidden', !ordersError);
+    if (ordersError) notice.textContent = noticeFor(ordersError);
+
+    const now = new Date();
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const today = orders.filter(o => o._created && o._created >= startToday);
+    const todayPaid = today.filter(o => o.status === 'paid');
+    const sum = (list, f) => list.reduce((s, o) => s + f(o), 0);
+    const count = st => today.filter(o => o.status === st).length;
+    const mismatches = today.filter(o => {
+      const w = weightCheck(o);
+      return w && !w.ok && (o.status === 'verified' || o.status === 'paid');
+    }).length;
+
+    const t = $('stats-today'); t.innerHTML = '';
+    t.appendChild(statCard('Revenue today', inr(sum(todayPaid, o => Number(o.total) || 0)), todayPaid.length + ' paid order' + (todayPaid.length === 1 ? '' : 's')));
+    t.appendChild(statCard('Orders today', String(today.length), 'all statuses'));
+    t.appendChild(statCard('Items sold today', String(sum(todayPaid, itemCount)), 'in paid orders'));
+    t.appendChild(statCard('Waiting for staff', String(count('pending')), 'created today'));
+    t.appendChild(statCard('Awaiting payment', String(count('verified')), 'verified today'));
+    t.appendChild(statCard('Rejected today', String(count('rejected')), ''));
+    t.appendChild(statCard('Weight mismatches', String(mismatches), 'verified today, outside tolerance', mismatches ? 'alert' : ''));
+
+    const paid = orders.filter(o => o.status === 'paid');
+    const revenue = sum(paid, o => Number(o.total) || 0);
+    const a = $('stats-all'); a.innerHTML = '';
+    a.appendChild(statCard('Total revenue', inr(revenue), 'paid orders'));
+    a.appendChild(statCard('Paid orders', String(paid.length), ''));
+    a.appendChild(statCard('Average bill', inr(paid.length ? revenue / paid.length : 0), ''));
+    $('ov-foot').textContent = ordersError ? '' : 'Based on the latest ' + orders.length + ' orders (up to 300).';
+  }
+
+  function renderProductStats() {
+    const missing = products.filter(p => !hasWeight(p)).length;
+    const broken = products.filter(p => !VALID_CODE.test(p.id)).length;
+    const box = $('stats-products'); box.innerHTML = '';
+    box.appendChild(statCard('Products', String(products.length), 'in the catalog', '', () => { showTab('products'); }));
+    box.appendChild(statCard('Missing weight', String(missing), missing ? 'staff weight check will fail' : 'all set', missing ? 'alert' : '', () => {
+      $('p-filter').value = 'noweight'; renderProducts(); showTab('products');
+    }));
+    if (broken) {
+      box.appendChild(statCard('Broken barcodes', String(broken), 'delete these', 'alert', () => {
+        $('p-filter').value = 'broken'; renderProducts(); showTab('products');
+      }));
+    }
+  }
+
+  // ---------- Orders tab ----------
+  function renderOrders() {
+    const notice = $('or-notice');
+    notice.classList.toggle('hidden', !ordersError);
+    if (ordersError) notice.textContent = noticeFor(ordersError);
+
+    const range = $('o-range').value, status = $('o-status').value;
+    const q = $('o-search').value.trim().toLowerCase();
+    const now = new Date();
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startWeek = new Date(startToday); startWeek.setDate(startWeek.getDate() - 6);
+
+    const rows = orders.filter(o => {
+      if (range === 'today' && !(o._created && o._created >= startToday)) return false;
+      if (range === 'week' && !(o._created && o._created >= startWeek)) return false;
+      if (status !== 'all' && o.status !== status) return false;
+      if (q) {
+        const hay = [o.id, o.customerName].concat((o.items || []).map(i => i.name)).map(v => String(v || '').toLowerCase());
+        if (!hay.some(h => h.includes(q))) return false;
+      }
+      return true;
+    });
+
+    const paidTotal = rows.filter(o => o.status === 'paid').reduce((s, o) => s + (Number(o.total) || 0), 0);
+    $('o-count').textContent = ordersError ? '' :
+      rows.length + ' order' + (rows.length === 1 ? '' : 's') + ' · ' + inr(paidTotal) + ' paid';
+
+    const list = $('o-list'); list.innerHTML = '';
+    if (!rows.length) { list.appendChild(el('div', 'empty', ordersError ? '' : 'No orders found.')); return; }
+
+    rows.forEach(o => {
+      const card = el('div', 'order');
+      const head = el('div', 'o-head');
+      const main = el('div', 'o-main');
+      const top = el('div', 'o-token', '#' + o.id);
+      top.appendChild(el('span', 'pill ' + (o.status || 'pending'), STATUS_LABEL[o.status] || String(o.status || 'unknown')));
+      const w = weightCheck(o);
+      if (w) {
+        const wp = el('span', 'pill ' + (w.ok ? 'wok' : 'wbad'),
+          w.ok ? 'Weight OK' : 'Weight mismatch (' + (w.diff > 0 ? '+' : '-') + fmtWeight(w.diff) + ')');
+        top.appendChild(wp);
+      }
+      main.appendChild(top);
+      const n = itemCount(o);
+      main.appendChild(el('div', 'o-sub',
+        fmtTime(o._created) + ' · ' + (o.customerName || 'Customer') + ' · ' + n + ' item' + (n === 1 ? '' : 's')));
+      head.appendChild(main);
+      head.appendChild(el('div', 'o-total', inr(o.total)));
+
+      const detail = el('div', 'o-detail hidden');
+      (Array.isArray(o.items) ? o.items : []).forEach(i => {
+        const line = el('div', 'o-line');
+        const qty = Number(i.qty) || 1;
+        line.appendChild(el('div', 'l', (i.name || i.code || 'Item') + ' × ' + qty));
+        line.appendChild(el('div', 'r', inr((Number(i.price) || 0) * qty)));
+        detail.appendChild(line);
+      });
+      const exp = Number(o.totalWeightGrams) || 0;
+      let wnote = 'Expected weight: ' + (exp ? fmtWeight(exp) : 'not recorded');
+      if (o.verifiedWeightKg != null && o.verifiedWeightKg !== '') wnote += ' · Staff weighed: ' + fmtWeight(Number(o.verifiedWeightKg) * 1000);
+      detail.appendChild(el('div', 'o-note', wnote));
+      const times = [];
+      if (o._verified) times.push('Verified ' + fmtTime(o._verified));
+      if (o._paid) times.push('Paid ' + fmtTime(o._paid));
+      if (times.length) detail.appendChild(el('div', 'o-note', times.join(' · ')));
+
+      head.addEventListener('click', () => detail.classList.toggle('hidden'));
+      card.appendChild(head);
+      card.appendChild(detail);
+      list.appendChild(card);
+    });
+  }
+  ['o-range', 'o-status'].forEach(id => $(id).addEventListener('change', renderOrders));
+  $('o-search').addEventListener('input', renderOrders);
 
   // ------------------------------------------------------
   // Products
   // ------------------------------------------------------
   let products = [];   // [{id, name, category, price, weightGrams}]
-  const VALID_CODE = /^\d{8,14}$/;
-  const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
   async function loadProducts() {
     $('count').textContent = 'Loading products...';
@@ -236,42 +562,74 @@
     }
   }
 
+  // refills the category drop-down, keeping the current choice if it still exists
+  function refreshCategoryFilter() {
+    const sel = $('p-cat'), keep = sel.value;
+    const cats = [...new Set(products.map(x => x.category).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">All categories</option>';
+    cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+    sel.value = cats.includes(keep) ? keep : '';
+  }
+
   function render() {
+    refreshCategoryFilter();
+    renderProducts();
+    renderProductStats();
+  }
+
+  function renderProducts() {
     const q = $('search').value.trim().toLowerCase();
-    const rows = products.filter(p =>
-      !q || [p.id, p.name, p.category].some(v => String(v || '').toLowerCase().includes(q)));
+    const cat = $('p-cat').value, filt = $('p-filter').value;
+    const rows = products.filter(p => {
+      if (q && ![p.id, p.name, p.category].some(v => String(v || '').toLowerCase().includes(q))) return false;
+      if (cat && p.category !== cat) return false;
+      if (filt === 'noweight' && hasWeight(p)) return false;
+      if (filt === 'broken' && VALID_CODE.test(p.id)) return false;
+      return true;
+    });
     const bad = products.filter(p => !VALID_CODE.test(p.id)).length;
+    const noW = products.filter(p => !hasWeight(p)).length;
     $('count').textContent = rows.length + ' of ' + products.length + ' products' +
+      (noW ? ' · ' + noW + ' missing weight' : '') +
       (bad ? ' · ' + bad + ' with a broken barcode' : '');
 
     const list = $('list');
     list.innerHTML = '';
     if (!rows.length) { list.innerHTML = '<div class="empty">No products found.</div>'; }
     rows.forEach(p => {
-      const el = document.createElement('div');
+      const item = document.createElement('div');
       const broken = !VALID_CODE.test(p.id);
-      el.className = 'item' + (broken ? ' bad' : '');
-      el.innerHTML = '<div class="info"><div class="name"></div><div class="meta"></div></div>' +
-                     '<div class="acts"><button class="btn ghost" data-a="edit" type="button">Edit</button>' +
-                     '<button class="btn danger" data-a="del" type="button">Delete</button></div>';
-      el.querySelector('.name').textContent = p.name || '(no name)';
-      const meta = el.querySelector('.meta');
+      const noWeight = !hasWeight(p);
+      item.className = 'item' + ((broken || noWeight) ? ' bad' : '');
+      item.innerHTML = '<div class="info"><div class="name"></div><div class="meta"></div></div>' +
+                       '<div class="acts"><button class="btn ghost" data-a="edit" type="button">Edit</button>' +
+                       '<button class="btn danger" data-a="del" type="button">Delete</button></div>';
+      item.querySelector('.name').textContent = p.name || '(no name)';
+      const meta = item.querySelector('.meta');
       meta.innerHTML = '<span class="price"></span> · <span class="rest"></span>';
       meta.querySelector('.price').textContent = inr(p.price);
       meta.querySelector('.rest').textContent =
-        (p.weightGrams != null ? p.weightGrams + ' g' : 'no weight') + ' · ' + (p.category || 'no category') + ' · ' + p.id;
+        (!noWeight ? p.weightGrams + ' g' : 'no weight') + ' · ' + (p.category || 'no category') + ' · ' + p.id;
       if (broken) {
         const t = document.createElement('div');
         t.className = 'tag';
         t.textContent = 'Broken barcode. Delete this entry.';
-        el.querySelector('.info').appendChild(t);
+        item.querySelector('.info').appendChild(t);
       }
-      el.querySelector('[data-a=edit]').addEventListener('click', () => openDialog(p));
-      el.querySelector('[data-a=del]').addEventListener('click', () => removeProduct(p));
-      list.appendChild(el);
+      if (noWeight) {
+        const t = document.createElement('div');
+        t.className = 'tag';
+        t.textContent = 'No weight set. The staff weight check will fail. Tap Edit.';
+        item.querySelector('.info').appendChild(t);
+      }
+      item.querySelector('[data-a=edit]').addEventListener('click', () => openDialog(p));
+      item.querySelector('[data-a=del]').addEventListener('click', () => removeProduct(p));
+      list.appendChild(item);
     });
   }
-  $('search').addEventListener('input', render);
+  $('search').addEventListener('input', renderProducts);
+  $('p-cat').addEventListener('change', renderProducts);
+  $('p-filter').addEventListener('change', renderProducts);
 
   async function removeProduct(p) {
     if (!confirm('Delete "' + (p.name || p.id) + '"? This cannot be undone.')) return;
