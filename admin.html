@@ -131,11 +131,21 @@
   .sheet .btns { display: flex; gap: 10px; margin-top: 20px; }
   .sheet .btns .btn { flex: 1; }
   .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* Barcode scanner inside the add-product dialog */
+  .scanbox { position: relative; margin-top: 10px; border-radius: 14px; overflow: hidden; background: #111; }
+  .scanbox video { display: block; width: 100%; height: 220px; object-fit: cover; }
+  .scan-frame { position: absolute; left: 10%; right: 10%; top: 22%; bottom: 22%; border: 3px solid #2dd4bf;
+                border-radius: 12px; pointer-events: none; box-shadow: 0 0 0 999px rgba(0, 0, 0, .35); }
+  .scan-msg { position: absolute; left: 0; right: 0; top: 8px; text-align: center; color: #fff; font-size: 13px;
+              text-shadow: 0 1px 3px rgba(0, 0, 0, .8); padding: 0 10px; }
+  .scan-stop { position: absolute; right: 8px; bottom: 8px; height: 36px !important; padding: 0 14px !important; font-size: 13px !important; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="js/firebase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
 </head>
 <body>
 
@@ -246,7 +256,14 @@
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
     <h2 id="dlg-title">Add product</h2>
     <label for="f-code">Barcode</label>
-    <input id="f-code" type="text" inputmode="numeric" maxlength="14" autocomplete="off">
+    <button class="btn primary full" id="f-scan" type="button" style="margin-top:0">Scan barcode with camera</button>
+    <div class="scanbox hidden" id="scanbox">
+      <video id="scan-video" playsinline muted></video>
+      <div class="scan-frame"></div>
+      <div class="scan-msg" id="scan-msg"></div>
+      <button class="btn ghost scan-stop" id="scan-stop" type="button">Stop scanning</button>
+    </div>
+    <input id="f-code" type="text" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="or type the number" style="margin-top:10px">
     <div class="hint" id="code-hint">8 to 14 digits, exactly as printed under the barcode.</div>
     <label for="f-name">Name</label>
     <input id="f-name" type="text" autocomplete="off">
@@ -649,6 +666,8 @@
     $('dlg-title').textContent = p ? 'Edit product' : 'Add product';
     $('f-code').value = p ? p.id : '';
     $('f-code').disabled = !!p;
+    stopAdminScan();
+    show('f-scan', !p);   // the scan button is only for adding new products
     $('code-hint').textContent = p ? 'The barcode cannot be changed. To fix it, delete this product and add it again.'
                                    : '8 to 14 digits, exactly as printed under the barcode.';
     $('f-name').value = p ? (p.name || '') : '';
@@ -662,12 +681,147 @@
     show('dlg', true);
     (p ? $('f-name') : $('f-code')).focus();
   }
-  const closeDialog = () => show('dlg', false);
+  const closeDialog = () => { stopAdminScan(); show('dlg', false); };
   $('add-btn').addEventListener('click', () => openDialog(null));
   $('f-cancel').addEventListener('click', closeDialog);
   $('dlg').addEventListener('click', e => { if (e.target === $('dlg')) closeDialog(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDialog(); });
   $('f-code').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
+
+
+  // ------------------------------------------------------
+  // Scan a barcode with the camera to fill the Barcode box
+  // (Chrome's built-in BarcodeDetector when available, otherwise Quagga2)
+  // ------------------------------------------------------
+  let scanStream = null, scanVideo = null, scanTimer = null, scanBusy = false;
+  let scanDetector = null, scanReads = [];
+  const scanCanvas = document.createElement('canvas');
+
+  function setScanMsg(t) { $('scan-msg').textContent = t; }
+
+  function stopAdminScan() {
+    clearInterval(scanTimer); scanTimer = null;
+    if (scanStream) scanStream.getTracks().forEach(t => t.stop());
+    scanStream = null;
+    if (scanVideo) scanVideo.srcObject = null;
+    scanReads = []; scanBusy = false;
+    show('scanbox', false);
+  }
+
+  function explainScanError(err) {
+    const n = (err && (err.name || err.message)) || '';
+    if (/NotAllowed|Permission|Security/i.test(n)) return 'Camera is blocked. Click the lock icon next to the web address, set Camera to Allow, then try again.';
+    if (/NotFound|DevicesNotFound/i.test(n)) return 'No camera found on this device. Type the number instead.';
+    if (/NotReadable|TrackStart/i.test(n)) return 'The camera is busy in another app or tab. Close it and try again.';
+    if (/Timeout/i.test(n)) return 'The camera did not respond. Allow camera permission and try again.';
+    return 'Could not start the camera (' + (n || 'unknown error') + '). Type the number instead.';
+  }
+
+  function getScanStream() {
+    const ask = async () => {
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+      } catch (e) {
+        if (/Overconstrained|Constraint/i.test((e && e.name) || '')) return await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        throw e;
+      }
+    };
+    return new Promise((resolve, reject) => {
+      let late = false;
+      const timer = setTimeout(() => { late = true; const e = new Error('timed out'); e.name = 'TimeoutError'; reject(e); }, 15000);
+      ask().then(st => { clearTimeout(timer); if (late) { st.getTracks().forEach(t => t.stop()); return; } resolve(st); })
+           .catch(e => { clearTimeout(timer); if (!late) reject(e); });
+    });
+  }
+
+  async function startAdminScan() {
+    $('f-msg').textContent = '';
+    show('scanbox', true);
+    setScanMsg('Starting camera... allow it if your browser asks');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setScanMsg('This browser cannot use the camera. Type the number instead.'); return;
+    }
+    try { scanStream = await getScanStream(); }
+    catch (e) { setScanMsg(explainScanError(e)); return; }
+
+    scanVideo = $('scan-video');
+    scanVideo.muted = true;
+    scanVideo.srcObject = scanStream;
+    try { await scanVideo.play(); }
+    catch (e) { setScanMsg('The camera opened but the video could not start.'); return; }
+
+    scanDetector = null;
+    try {
+      if ('BarcodeDetector' in window) {
+        const sup = await BarcodeDetector.getSupportedFormats();
+        const want = ['ean_13', 'ean_8', 'upc_a', 'upc_e'].filter(f => sup.includes(f));
+        if (want.length) scanDetector = new BarcodeDetector({ formats: want });
+      }
+    } catch (e) { scanDetector = null; }
+
+    setScanMsg('Hold the barcode inside the frame, steady and well lit');
+    clearInterval(scanTimer);
+    scanTimer = setInterval(scanTick, 200);
+  }
+
+  function quaggaRead(canvas) {
+    return new Promise(resolve => {
+      if (typeof Quagga === 'undefined') { resolve(null); return; }
+      try {
+        Quagga.decodeSingle({
+          src: canvas.toDataURL('image/jpeg', 0.85), numOfWorkers: 0,
+          inputStream: { size: canvas.width }, locator: { patchSize: 'medium', halfSample: false },
+          decoder: { readers: ['ean_reader', 'ean_8_reader', 'upc_reader', 'upc_e_reader'] }, locate: true
+        }, r => resolve(r && r.codeResult ? r.codeResult.code : null));
+      } catch (e) { resolve(null); }
+    });
+  }
+
+  async function scanTick() {
+    if (scanBusy || !scanVideo || !scanVideo.videoWidth) return;
+    scanBusy = true;
+    try {
+      const vw = scanVideo.videoWidth, vh = scanVideo.videoHeight;
+      const sw = vw * 0.8, sh = vh * 0.5, sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+      scanCanvas.width = Math.min(Math.round(sw), 960);
+      scanCanvas.height = Math.round(sh * (scanCanvas.width / sw));
+      scanCanvas.getContext('2d').drawImage(scanVideo, sx, sy, sw, sh, 0, 0, scanCanvas.width, scanCanvas.height);
+      let code = null;
+      if (scanDetector) {
+        try { const f = await scanDetector.detect(scanCanvas); if (f.length) code = f[0].rawValue; }
+        catch (e) { scanDetector = null; }
+      } else {
+        code = await quaggaRead(scanCanvas);
+      }
+      if (code) handleScanned(code);
+    } finally { scanBusy = false; }
+  }
+
+  // the same number must be read more than once, so one bad frame is never trusted
+  function handleScanned(code) {
+    if (!VALID_CODE.test(code)) return;
+    const now = Date.now();
+    scanReads = scanReads.filter(r => now - r.t < 2000);
+    scanReads.push({ code, t: now });
+    const needed = scanDetector ? 2 : 3;
+    if (scanReads.filter(r => r.code === code).length < needed) return;
+
+    stopAdminScan();
+    $('f-code').value = code;
+    const existing = products.find(p => p.id === code);
+    if (existing) {
+      $('code-hint').textContent = 'Scanned: ' + code;
+      $('f-msg').textContent = 'This barcode is already in your catalog ("' + (existing.name || code) + '"). Close this and tap Edit on it instead.';
+    } else {
+      $('code-hint').textContent = 'Scanned: ' + code + '. Now fill in the name, category, price and weight.';
+      $('f-name').focus();
+    }
+  }
+
+  $('f-scan').addEventListener('click', startAdminScan);
+  $('scan-stop').addEventListener('click', stopAdminScan);
+  window.addEventListener('pagehide', stopAdminScan);
 
   $('f-save').addEventListener('click', async () => {
     const msg = $('f-msg');
